@@ -1,0 +1,24 @@
+# Virtual environment & python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+env/
+
+# Massive original media (4K 60fps & RAW photos)
+Photos/
+Photos_HDR_Backup/
+media_cache/
+
+# Temporary / scratch / test files
+scratch/
+*.tmp
+*.tmp.mp4
+*.tmp.jpg
+
+# OS / Editor metadata
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

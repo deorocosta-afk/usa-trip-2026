@@ -1,0 +1,44 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Day 2: West Sac \u2192 Calaveras \u2192 Murphys \u2192 Lake Alpine \u2192 Sonora",
+        "description": "305 \u043a\u043c: South Grove (8\u043a\u043c \u0445\u0430\u0439\u043a), \u0432\u0438\u043d\u0430 Murphys, \u0430\u043b\u044c\u043f\u0438\u0439\u0441\u043a\u043e\u0435 \u043e\u0437\u0435\u0440\u043e 2240\u043c.",
+        "color": "#FF6600",
+        "weight": 5,
+        "day": 2
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -121.5341,
+            38.5805
+          ],
+          [
+            -121.3,
+            38.4
+          ],
+          [
+            -120.3445,
+            38.2645
+          ],
+          [
+            -120.488,
+            38.232
+          ],
+          [
+            -120.059,
+            38.475
+          ],
+          [
+            -120.42,
+            38.3
+          ]
+        ]
+      }
+    }
+  ]
+}
