@@ -326,33 +326,6 @@ def generate_html(days_data):
       pointer-events: none; /* Never intercept touches/clicks from container */
     }}
 
-    /* Circular Play/Pause Indicator (Overlay like Instagram/Telegram) */
-    .tg-play-indicator {{
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 15;
-      pointer-events: none;
-      transition: opacity 0.2s ease, transform 0.2s ease;
-    }}
-    .tg-play-indicator svg {{
-      width: 28px;
-      height: 28px;
-      fill: #ffffff;
-      margin-left: 3px;
-    }}
-
     /* ==========================================================================
        3. BOTTOM OVERLAY: STORY CAPTION + CUSTOM TELEGRAM TIMELINE
        ========================================================================== */
@@ -693,11 +666,6 @@ def generate_html(days_data):
 
     <img id="slideImg" src="" alt="Медиа экспедиции" />
     <video id="slideVideo" src="" autoplay loop muted playsinline webkit-playsinline preload="metadata" style="display:none;"></video>
-    
-    <!-- Circular Play/Pause Indicator -->
-    <div class="tg-play-indicator" id="tgPlayIndicator">
-      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-    </div>
   </main>
 
   <!-- ==========================================================================
@@ -888,9 +856,9 @@ def generate_html(days_data):
       const timeline = document.getElementById('tgTimeline');
       const timelineFill = document.getElementById('tgTimelineFill');
       const timelineTimer = document.getElementById('tgTimelineTimer');
-      const playIndicator = document.getElementById('tgPlayIndicator');
-      
-      playIndicator.style.display = 'none';
+
+      video.onpause = null;
+      video.onplay = null;
 
       if (slide.is_video) {{
         img.style.display = 'none';
@@ -915,13 +883,6 @@ def generate_html(days_data):
             timelineFill.style.width = `${{pct}}%`;
             timelineTimer.textContent = `${{formatTime(video.currentTime)}} / ${{formatTime(video.duration)}}`;
           }}
-        }};
-
-        video.onpause = () => {{
-          playIndicator.style.display = 'flex';
-        }};
-        video.onplay = () => {{
-          playIndicator.style.display = 'none';
         }};
       }} else {{
         video.pause();
