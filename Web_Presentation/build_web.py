@@ -362,8 +362,8 @@ def generate_html(days_data):
       left: 0;
       right: 0;
       z-index: 30;
-      padding: 14px 16px calc(env(safe-area-inset-bottom, 10px) + 10px) 16px;
-      background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.65) 75%, transparent 100%);
+      padding: 8px 16px calc(env(safe-area-inset-bottom, 8px) + 8px) 16px;
+      background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.65) 60%, transparent 100%);
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
@@ -373,15 +373,15 @@ def generate_html(days_data):
 
     /* Caption Story Text */
     .tg-caption-story {{
-      font-size: 13.5px;
-      line-height: 1.4;
+      font-size: 13px;
+      line-height: 1.35;
       color: #ffffff;
       text-align: left;
       font-weight: 400;
       text-shadow: 0 1px 3px rgba(0,0,0,0.9);
       user-select: text;
-      margin-bottom: 8px;
-      max-height: 20vh;
+      margin-bottom: 6px;
+      max-height: 10vh;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: thin;
