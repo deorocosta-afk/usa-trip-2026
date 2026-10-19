@@ -25,14 +25,23 @@ def extract_day_number(filename):
     match = re.search(r"Day\s*(\d+)", filename, re.IGNORECASE)
     return int(match.group(1)) if match else 999
 
-def clean_location_title(raw_title):
+def parse_header_meta(raw_title):
     cleaned = re.sub(r"^[>\s]*\[!quote\]\s*", "", raw_title).strip()
     cleaned = re.sub(r"^[>\s]*📍\s*", "", cleaned).strip()
-    parts = cleaned.split("|")
-    first_part = parts[0].strip()
+    parts = [p.strip() for p in cleaned.split("|")]
+    
+    first_part = parts[0] if parts else ""
     first_part = re.sub(r"[*_]{2,}", "", first_part)
-    first_part = re.sub(r"[*_]", "", first_part)
-    return first_part.strip()
+    first_part = re.sub(r"[*_]", "", first_part).strip()
+    
+    sub_info = ""
+    if len(parts) > 1:
+        rest = " • ".join(parts[1:])
+        rest = re.sub(r"[*_]{2,}", "", rest)
+        rest = re.sub(r"[*_]", "", rest)
+        sub_info = rest.strip()
+    
+    return first_part, sub_info
 
 def clean_story_text(lines):
     full_text = " ".join([l.strip().lstrip(">").strip() for l in lines if l.strip()])
@@ -90,7 +99,7 @@ def parse_day_file(file_path):
                     story_lines.append(lines[j].strip())
                     j += 1
             
-            loc_title = clean_location_title(raw_title)
+            loc_title, meta_info = parse_header_meta(raw_title)
             story = clean_story_text(story_lines)
             
             if media_file:
@@ -98,6 +107,7 @@ def parse_day_file(file_path):
                     "media": media_url,
                     "is_video": is_video,
                     "title": loc_title,
+                    "meta": meta_info,
                     "story": story
                 })
             i = j
@@ -133,22 +143,16 @@ def generate_html(days_data):
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap" rel="stylesheet">
   <style>
     :root {{
-      --bg-main: #121212;
-      --bg-card: #1a1a1a;
-      --bg-card-hover: #222222;
+      --bg-black: #000000;
       --accent-gold: #e5b567;
-      --accent-gold-dim: rgba(229, 181, 103, 0.2);
-      --text-main: #f0f0f0;
-      --text-muted: #a0a0a0;
-      --text-dim: #707070;
-      --border: rgba(255, 255, 255, 0.08);
+      --text-white: #ffffff;
+      --text-muted: rgba(255, 255, 255, 0.65);
+      --border-light: rgba(255, 255, 255, 0.15);
       --font-display: 'Cinzel', serif;
       --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      --nav-height: 64px;
-      --bottom-bar-height: 68px;
     }}
 
     * {{
@@ -157,559 +161,282 @@ def generate_html(days_data):
       padding: 0;
     }}
 
-    body {{
-      background-color: var(--bg-main);
-      color: var(--text-main);
+    html, body {{
+      width: 100vw;
+      height: 100vh;
+      height: 100svh;
+      background-color: var(--bg-black);
+      color: var(--text-white);
       font-family: var(--font-body);
-      min-height: 100vh;
-      overflow-x: hidden;
+      overflow: hidden;
       -webkit-font-smoothing: antialiased;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
     }}
 
-    /* TOP NAVIGATION (Desktop & Tablet) */
-    header.top-nav {{
-      position: fixed;
+    /* ==========================================================================
+       1. NATIVE TELEGRAM MEDIA VIEWER HEADER (Top Overlay)
+       ========================================================================== */
+    .tg-header-overlay {{
+      position: absolute;
       top: 0;
       left: 0;
       right: 0;
-      height: var(--nav-height);
-      background: rgba(18, 18, 18, 0.88);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 2rem;
-      z-index: 1000;
-      transition: opacity 0.25s ease, transform 0.25s ease;
-    }}
-
-    .nav-brand {{
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      font-family: var(--font-display);
-      font-size: 1.15rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: var(--accent-gold);
-      text-transform: uppercase;
-      cursor: pointer;
-    }}
-
-    .nav-brand span.icon {{
-      font-size: 1.3rem;
-    }}
-
-    .nav-center {{
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: rgba(255, 255, 255, 0.04);
-      padding: 4px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      max-width: 60vw;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }}
-    .nav-center::-webkit-scrollbar {{
-      display: none;
-    }}
-
-    .day-pill {{
-      padding: 0.4rem 1rem;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: var(--text-muted);
-      cursor: pointer;
-      background: transparent;
-      border: none;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-    }}
-
-    .day-pill:hover {{
-      color: var(--text-main);
-      background: rgba(255, 255, 255, 0.06);
-    }}
-
-    .day-pill.active {{
-      color: #121212;
-      background: var(--accent-gold);
-      font-weight: 600;
-      box-shadow: 0 2px 10px rgba(229, 181, 103, 0.3);
-    }}
-
-    .nav-controls {{
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }}
-
-    .view-toggle {{
-      display: flex;
-      background: rgba(255, 255, 255, 0.04);
-      border-radius: 8px;
-      padding: 3px;
-      border: 1px solid var(--border);
-    }}
-
-    .toggle-btn {{
-      padding: 0.4rem 0.85rem;
-      font-size: 0.8rem;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      transition: all 0.2s ease;
-      font-family: var(--font-body);
-    }}
-
-    .toggle-btn.active {{
-      background: rgba(255, 255, 255, 0.12);
-      color: var(--text-main);
-      font-weight: 500;
-    }}
-
-    /* MAIN CONTAINER */
-    main.view-container {{
-      margin-top: var(--nav-height);
-      min-height: calc(100vh - var(--nav-height));
-      -webkit-overflow-scrolling: touch;
-    }}
-
-    /* 1. SLIDESHOW VIEW (Desktop) */
-    .slideshow-view {{
-      position: fixed;
-      top: var(--nav-height);
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      background: #0a0a0a;
-      overflow: hidden;
-    }}
-
-    .slide-media {{
-      flex: 0 0 70%;
-      height: 100%;
-      position: relative;
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      cursor: pointer;
-    }}
-
-    .slide-media img, .slide-media video {{
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      box-shadow: 0 0 40px rgba(0,0,0,0.8);
-      transition: opacity 0.35s ease, transform 0.4s ease;
-    }}
-
-    /* Safe-zone Sound Button (Speaker) */
-    .video-sound-btn {{
-      position: absolute;
-      top: max(16px, env(safe-area-inset-top, 16px));
-      right: 16px;
-      width: 44px;
-      height: 44px;
-      min-width: 44px;
-      border-radius: 50%;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      color: #ffffff;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 35;
-      transition: transform 0.2s ease, background 0.2s ease, opacity 0.25s ease;
-      touch-action: manipulation;
-    }}
-    .video-sound-btn:active {{
-      transform: scale(0.92);
-      background: rgba(229, 181, 103, 0.85);
-      color: #121212;
-    }}
-    .video-sound-btn svg {{
-      width: 20px;
-      height: 20px;
-      pointer-events: none;
-    }}
-
-    .slide-sidebar {{
-      flex: 0 0 30%;
-      height: 100%;
-      background: #141414;
-      border-left: 1px solid var(--border);
+      z-index: 30;
+      padding: 12px 16px 18px 16px;
+      padding-top: max(12px, env(safe-area-inset-top, 12px));
+      background: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      padding: 3rem 2.5rem;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      gap: 6px;
       transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
     }}
 
-    .slide-meta {{
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-    }}
-
-    .slide-day-tag {{
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-family: var(--font-display);
-      font-size: 0.85rem;
-      color: var(--accent-gold);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }}
-
-    .slide-title {{
-      font-size: 1.75rem;
-      font-weight: 600;
-      line-height: 1.3;
-      color: var(--text-main);
-      letter-spacing: -0.01em;
-    }}
-
-    .slide-divider {{
-      width: 40px;
-      height: 2px;
-      background: var(--accent-gold);
-      opacity: 0.8;
-    }}
-
-    .slide-story {{
-      font-size: 1.05rem;
-      line-height: 1.75;
-      color: #d0d0d0;
-      font-weight: 300;
-      user-select: text;
-    }}
-
-    .slide-controls {{
+    .tg-header-top-row {{
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-top: 1.5rem;
-      border-top: 1px solid var(--border);
+      gap: 12px;
+      width: 100%;
     }}
 
-    .slide-counter {{
-      font-size: 0.9rem;
-      color: var(--text-dim);
-      font-variant-numeric: tabular-nums;
-    }}
-
-    .slide-nav-buttons {{
+    .tg-header-left {{
       display: flex;
-      gap: 0.75rem;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1;
     }}
 
-    .nav-arrow {{
-      width: 48px;
-      height: 48px;
-      min-width: 48px;
+    .tg-back-btn {{
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      color: var(--text-main);
-      cursor: pointer;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
-      transition: all 0.2s ease;
+      cursor: pointer;
       touch-action: manipulation;
     }}
-
-    .nav-arrow:hover {{
-      background: var(--accent-gold);
-      color: #121212;
-      border-color: var(--accent-gold);
+    .tg-back-btn svg {{
+      width: 20px;
+      height: 20px;
     }}
 
-    .nav-arrow:active {{
-      transform: scale(0.92);
-    }}
-
-    /* Title Screen Overlay */
-    .title-slide-container {{
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at center, #1e1e1e 0%, #0d0d0d 100%);
+    .tg-header-titles {{
       display: flex;
       flex-direction: column;
+      min-width: 0;
+    }}
+
+    .tg-header-loc-title {{
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }}
+
+    .tg-header-submeta {{
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+      margin-top: 1px;
+    }}
+
+    .tg-header-right {{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }}
+
+    .tg-icon-btn {{
+      width: 38px;
+      height: 38px;
+      min-width: 38px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      display: flex;
       align-items: center;
       justify-content: center;
-      text-align: center;
-      padding: 2.5rem 1.5rem;
-      z-index: 40;
-    }}
-
-    .title-slide-day {{
-      font-family: var(--font-display);
-      font-size: 1.25rem;
-      color: var(--accent-gold);
-      letter-spacing: 0.2em;
-      margin-bottom: 1rem;
-      text-transform: uppercase;
-    }}
-
-    .title-slide-route {{
-      font-size: 2.2rem;
-      font-weight: 700;
-      max-width: 850px;
-      line-height: 1.3;
-      margin-bottom: 2rem;
-      color: #fff;
-    }}
-
-    .title-slide-btn {{
-      padding: 0.9rem 2.2rem;
-      background: var(--accent-gold);
-      color: #121212;
-      border: none;
-      border-radius: 999px;
-      font-weight: 600;
-      font-size: 1rem;
       cursor: pointer;
-      box-shadow: 0 4px 20px rgba(229, 181, 103, 0.3);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
       touch-action: manipulation;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }}
+    .tg-icon-btn:active {{
+      transform: scale(0.92);
+      background: rgba(255, 255, 255, 0.25);
+    }}
+    .tg-icon-btn svg {{
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
     }}
 
-    .title-slide-btn:hover {{
-      transform: translateY(-2px);
-      box-shadow: 0 6px 25px rgba(229, 181, 103, 0.45);
-    }}
-
-    /* 2. LONGFROM / ALBUM VIEW */
-    .album-view {{
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 3.5rem 2rem 8rem;
-      -webkit-overflow-scrolling: touch;
-    }}
-
-    .album-day-section {{
-      margin-bottom: 5rem;
-    }}
-
-    .album-day-header {{
+    /* Compact Frame Counter (like Telegram 7838 из 7845) */
+    .tg-header-counter-bar {{
       text-align: center;
-      margin-bottom: 3rem;
-      padding-bottom: 2rem;
-      border-bottom: 1px solid var(--border);
-    }}
-
-    .album-day-tag {{
-      font-family: var(--font-display);
-      font-size: 0.95rem;
-      color: var(--accent-gold);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      margin-bottom: 0.6rem;
-    }}
-
-    .album-day-title {{
-      font-size: 2.1rem;
-      font-weight: 700;
-      line-height: 1.3;
+      font-size: 13px;
+      font-weight: 500;
       color: #ffffff;
+      letter-spacing: 0.2px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+      user-select: none;
     }}
 
-    .album-card {{
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      margin-bottom: 3.5rem;
+    /* ==========================================================================
+       2. CENTRAL MEDIA DISPLAY (Fit with zero cropping)
+       ========================================================================== */
+    .tg-media-viewport {{
+      position: absolute;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100svh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000000;
       overflow: hidden;
-      box-shadow: 0 16px 36px rgba(0,0,0,0.4);
-      transition: transform 0.3s ease, border-color 0.3s ease;
+      z-index: 10;
     }}
 
-    .album-card:hover {{
-      border-color: rgba(229, 181, 103, 0.3);
-      transform: translateY(-3px);
-    }}
-
-    .album-image-wrapper {{
-      position: relative;
-      background: #000;
-      width: 100%;
-      height: 580px;
-      cursor: zoom-in;
-      overflow: hidden;
-    }}
-
-    .album-image-wrapper img, .album-image-wrapper video {{
+    .tg-media-viewport img,
+    .tg-media-viewport video {{
       width: 100%;
       height: 100%;
-      object-fit: cover;
-      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain; /* Full frame fits without cropping */
       display: block;
+      background: #000000;
+      cursor: pointer;
     }}
 
-    .album-image-wrapper:hover img {{
-      transform: scale(1.02);
-    }}
-
-    .album-caption {{
-      padding: 2.2rem 2.5rem;
-    }}
-
-    .album-loc-title {{
-      font-size: 1.45rem;
-      font-weight: 600;
-      color: var(--text-main);
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: baseline;
-      gap: 0.5rem;
-    }}
-
-    .album-story {{
-      font-size: 1.05rem;
-      line-height: 1.75;
-      color: #c8c8c8;
-      font-weight: 300;
-      user-select: text;
-    }}
-
-    /* Lightbox Modal */
-    .lightbox {{
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.95);
-      z-index: 3000;
+    /* Circular Play/Pause Indicator (Overlay like Instagram/Telegram) */
+    .tg-play-indicator {{
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 1.5rem;
-      cursor: zoom-out;
+      z-index: 15;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }}
+    .tg-play-indicator svg {{
+      width: 28px;
+      height: 28px;
+      fill: #ffffff;
+      margin-left: 3px;
     }}
 
-    .lightbox.active {{
-      display: flex;
-      animation: fadeIn 0.2s ease forwards;
-    }}
-
-    .lightbox img, .lightbox video {{
-      max-width: 95vw;
-      max-height: 92vh;
-      object-fit: contain;
-      border-radius: 8px;
-      box-shadow: 0 0 50px rgba(0,0,0,0.9);
-    }}
-
-    @keyframes fadeIn {{
-      from {{ opacity: 0; }}
-      to {{ opacity: 1; }}
-    }}
-
-    /* MOBILE FLOATING BOTTOM BAR */
-    .mobile-bottom-bar {{
-      display: none;
-      position: fixed;
+    /* ==========================================================================
+       3. BOTTOM OVERLAY: STORY CAPTION + CUSTOM TELEGRAM TIMELINE
+       ========================================================================== */
+    .tg-bottom-overlay {{
+      position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      height: var(--bottom-bar-height);
-      background: rgba(18, 18, 18, 0.94);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid var(--border);
-      z-index: 1000;
-      padding: 0 1rem;
-      padding-bottom: env(safe-area-inset-bottom, 0px);
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 30;
+      padding: 36px 16px calc(env(safe-area-inset-bottom, 12px) + 14px) 16px;
+      background: linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.78) 60%, transparent 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      pointer-events: auto;
+      transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
     }}
 
-    .mobile-day-selector {{
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      flex: 1;
-      overflow-x: auto;
-      scrollbar-width: none;
+    /* Caption Story Text */
+    .tg-caption-story {{
+      font-size: 14px;
+      line-height: 1.44;
+      color: #ffffff;
+      text-align: left;
+      font-weight: 400;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+      user-select: text;
+      margin-bottom: 14px;
+      max-height: 32vh;
+      overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 4px 0;
-    }}
-    .mobile-day-selector::-webkit-scrollbar {{
-      display: none;
+      scrollbar-width: thin;
     }}
 
-    .mobile-day-pill {{
-      padding: 0.45rem 0.9rem;
-      min-height: 38px;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: var(--text-muted);
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      white-space: nowrap;
-      cursor: pointer;
-      touch-action: manipulation;
-    }}
-    .mobile-day-pill.active {{
-      color: #121212;
-      background: var(--accent-gold);
-      border-color: var(--accent-gold);
-      font-weight: 600;
-    }}
-
-    .mobile-view-toggle {{
-      display: flex;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 2px;
-      min-width: 90px;
-    }}
-    .mobile-view-toggle button {{
-      flex: 1;
-      height: 38px;
-      min-width: 44px;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      border-radius: 8px;
-      cursor: pointer;
+    /* Custom Telegram Video Timeline Bar */
+    .tg-video-timeline {{
       display: flex;
       align-items: center;
-      justify-content: center;
-      touch-action: manipulation;
-    }}
-    .mobile-view-toggle button.active {{
-      background: rgba(255, 255, 255, 0.15);
-      color: var(--text-main);
+      gap: 12px;
+      width: 100%;
+      padding-top: 4px;
     }}
 
-    /* UI HIDDEN STATE FOR IMMERSIVE TAP (Stories / Telegram UI) */
+    .tg-timeline-track {{
+      flex: 1;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+      touch-action: none;
+    }}
+
+    .tg-timeline-fill {{
+      height: 100%;
+      background: #ffffff;
+      border-radius: 999px;
+      width: 0%;
+      position: relative;
+    }}
+
+    /* Telegram Circular Playhead Scrubber */
+    .tg-timeline-fill::after {{
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: -4px;
+      width: 12px;
+      height: 12px;
+      background: #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    }}
+
+    .tg-timeline-timer {{
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.88);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      user-select: none;
+    }}
+
+    /* UI HIDDEN STATE (Tap to Hide / Immersive Clean Screen) */
     .ui-hidden {{
       opacity: 0 !important;
       pointer-events: none !important;
@@ -717,254 +444,203 @@ def generate_html(days_data):
       visibility: hidden !important;
     }}
 
-    /* ==========================================================================
-       RESPONSIVE & MOBILE-FIRST STORIES / TELEGRAM WEB APP UX (Screens < 768px)
-       ========================================================================== */
-    @media (max-width: 768px) {{
-      :root {{
-        --nav-height: 50px;
-      }}
+    /* Day Picker Modal Drawer */
+    .tg-modal-drawer {{
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }}
+    .tg-modal-drawer.active {{
+      display: flex;
+    }}
+    .tg-drawer-sheet {{
+      width: 100%;
+      max-height: 70vh;
+      background: #1c1c1c;
+      border-radius: 16px 16px 0 0;
+      padding: 1.5rem 1rem calc(env(safe-area-inset-bottom, 12px) + 1rem);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      border-top: 1px solid var(--border-light);
+    }}
+    .tg-drawer-header {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }}
+    .tg-drawer-title {{
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent-gold);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }}
+    .tg-drawer-close {{
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+    }}
+    .tg-drawer-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 0.6rem;
+      overflow-y: auto;
+      max-height: 50vh;
+    }}
+    .tg-drawer-btn {{
+      padding: 0.75rem 0.5rem;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }}
+    .tg-drawer-btn.active {{
+      background: var(--accent-gold);
+      color: #000;
+      font-weight: 700;
+    }}
 
-      /* Top navigation minimal */
-      header.top-nav {{
-        padding: 0 1rem;
-        height: var(--nav-height);
-        background: rgba(10, 10, 10, 0.7);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-      }}
-      .nav-center, .nav-controls {{
-        display: none !important;
-      }}
-      .mobile-bottom-bar {{
-        display: flex;
-      }}
+    /* Title Screen Overlay */
+    .title-slide-container {{
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, #1c1c1c 0%, #000000 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      z-index: 50;
+    }}
 
-      /* FULLSCREEN STORIES SLIDESHOW CONTAINER */
-      .slideshow-view {{
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        width: 100vw !important;
-        height: 100svh !important;
-        height: 100vh !important;
-        position: fixed !important;
-        overflow: hidden !important;
-        background: #000 !important;
-        display: flex;
-        flex-direction: column;
-      }}
+    .title-slide-day {{
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: var(--accent-gold);
+      letter-spacing: 0.2em;
+      margin-bottom: 0.8rem;
+      text-transform: uppercase;
+    }}
 
-      /* Media occupies full screen like Telegram Stories */
-      .slide-media {{
-        position: absolute !important;
-        inset: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        flex: none !important;
-        background: #000 !important;
-        z-index: 10 !important;
-        touch-action: none;
-      }}
+    .title-slide-route {{
+      font-size: 1.8rem;
+      font-weight: 700;
+      max-width: 700px;
+      line-height: 1.35;
+      margin-bottom: 1.8rem;
+      color: #fff;
+    }}
 
-      .slide-media img, .slide-media video {{
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: cover !important; /* Portrait filled like Stories */
-        display: block !important;
-        box-shadow: none !important;
-      }}
+    .title-slide-btn {{
+      padding: 0.85rem 2rem;
+      background: var(--accent-gold);
+      color: #121212;
+      border: none;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(229, 181, 103, 0.35);
+      transition: transform 0.2s ease;
+      touch-action: manipulation;
+    }}
 
-      /* Horizontal landscape videos/photos fit with black background */
-      .slide-media.is-landscape img,
-      .slide-media.is-landscape video {{
-        object-fit: contain !important;
-        background: #000 !important;
-      }}
-
-      .video-sound-btn {{
-        display: flex;
-      }}
-
-      /* CAPTION OVERLAY: Compact semi-transparent gradient on bottom */
-      .slide-sidebar {{
-        position: absolute !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100% !important;
-        max-height: 48vh !important;
-        height: auto !important;
-        flex: none !important;
-        background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, rgba(0,0,0,0) 100%) !important;
-        border-left: none !important;
-        border-top: none !important;
-        padding: 50px 16px max(74px, calc(env(safe-area-inset-bottom, 16px) + 64px)) 16px !important;
-        z-index: 20 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: flex-end !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        pointer-events: auto;
-      }}
-
-      .slide-meta {{
-        gap: 0.35rem !important;
-      }}
-
-      .slide-day-tag {{
-        font-size: 11px !important;
-        opacity: 0.85;
-        letter-spacing: 0.6px;
-      }}
-
-      .slide-title {{
-        font-size: 13px !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
-        color: var(--accent-gold) !important;
-        line-height: 1.3 !important;
-      }}
-
-      .slide-divider {{
-        display: none !important;
-      }}
-
-      .slide-story {{
-        font-size: 13.5px !important;
-        line-height: 1.45 !important;
-        color: #f0f0f0 !important;
-        font-weight: 400 !important;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.9) !important;
-        margin-top: 2px !important;
-      }}
-
-      .slide-controls {{
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        padding-top: 0.6rem !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-        margin-top: 0.5rem !important;
-      }}
-
-      .slide-counter {{
-        font-size: 11.5px !important;
-        color: var(--accent-gold) !important;
-      }}
-
-      .slide-nav-buttons {{
-        gap: 0.5rem !important;
-      }}
-
-      .nav-arrow {{
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
-        font-size: 1rem !important;
-        background: rgba(255, 255, 255, 0.12) !important;
-      }}
-
-      .title-slide-container {{
-        padding: 2rem 1.5rem !important;
-      }}
-      .title-slide-route {{
-        font-size: 1.5rem !important;
-        line-height: 1.35 !important;
-        margin-bottom: 1.5rem !important;
-      }}
-
-      /* Longform / Album in Mobile */
-      .album-view {{
-        padding: 1.25rem 0.85rem calc(var(--bottom-bar-height) + 2rem) !important;
-      }}
-
-      .album-day-section {{
-        margin-bottom: 3.5rem !important;
-      }}
-
-      .album-day-header {{
-        margin-bottom: 2rem !important;
-        padding-bottom: 1.25rem !important;
-      }}
-      .album-day-title {{
-        font-size: 1.45rem !important;
-        line-height: 1.3 !important;
-      }}
-
-      .album-card {{
-        border-radius: 12px !important;
-        margin-bottom: 2.25rem !important;
-      }}
-
-      .album-image-wrapper {{
-        height: auto !important;
-        aspect-ratio: 16 / 9 !important;
-        max-height: 60vh !important;
-      }}
-
-      .album-caption {{
-        padding: 1.25rem 1rem 1.4rem !important;
-      }}
-
-      .album-loc-title {{
-        font-size: 1.2rem !important;
-        line-height: 1.35 !important;
-        margin-bottom: 0.75rem !important;
-      }}
-
-      .album-story {{
-        font-size: 0.98rem !important;
-        line-height: 1.65 !important;
-        color: #d0d0d0 !important;
-      }}
+    /* Album / Longform View Container */
+    .album-view {{
+      position: absolute;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow-y: auto;
+      background: #0d0d0d;
+      padding: calc(env(safe-area-inset-top, 20px) + 50px) 1.25rem 5rem;
+      z-index: 10;
+      -webkit-overflow-scrolling: touch;
+    }}
+    .album-day-header {{
+      text-align: center;
+      margin-bottom: 2rem;
+    }}
+    .album-day-tag {{
+      font-size: 12px;
+      color: var(--accent-gold);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }}
+    .album-day-title {{
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+    }}
+    .album-card {{
+      background: #181818;
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      margin-bottom: 2.5rem;
+      overflow: hidden;
+    }}
+    .album-image-wrapper {{
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      background: #000;
+    }}
+    .album-image-wrapper img, .album-image-wrapper video {{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }}
+    .album-caption {{
+      padding: 1.25rem 1rem;
+    }}
+    .album-loc-title {{
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.6rem;
+    }}
+    .album-story {{
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #d0d0d0;
     }}
   </style>
 </head>
 <body>
 
-  <!-- Top Navigation (Desktop / Mobile brand) -->
-  <header class="top-nav" id="topNav">
-    <div class="nav-brand" onclick="goToDay(0, true)">
-      <span class="icon">🏔️</span> California 2026
-    </div>
-
-    <div class="nav-center" id="dayPillsContainer"></div>
-
-    <div class="nav-controls">
-      <div class="view-toggle">
-        <button class="toggle-btn active" id="btnSlideshow" onclick="switchView('slideshow')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          Слайд-шоу
+  <!-- ==========================================================================
+       1. NATIVE TELEGRAM MEDIA VIEWER HEADER (Top Overlay)
+       ========================================================================== -->
+  <header class="tg-header-overlay" id="tgHeader">
+    <div class="tg-header-top-row">
+      <div class="tg-header-left">
+        <button class="tg-back-btn" onclick="openDayDrawer(event)" title="Выбрать день" aria-label="Выбрать день">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </button>
-        <button class="toggle-btn" id="btnAlbum" onclick="switchView('album')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          Фотоальбом
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- View Container -->
-  <main class="view-container">
-    
-    <!-- 1. SLIDESHOW VIEW -->
-    <div class="slideshow-view" id="slideshowContainer">
-      <div class="title-slide-container" id="titleSlideOverlay" style="display: none;">
-        <div class="title-slide-day" id="titleDayTag">DAY 1</div>
-        <div class="title-slide-route" id="titleRouteText">Маршрут дня</div>
-        <button class="title-slide-btn" onclick="startDaySlides()">Смотреть историю дня</button>
+        <div class="tg-header-titles">
+          <div class="tg-header-loc-title" id="tgLocTitle">Загрузка...</div>
+          <div class="tg-header-submeta" id="tgSubMeta">Калифорния 2026</div>
+        </div>
       </div>
 
-      <div class="slide-media" id="slideMediaWrapper">
-        <img id="slideImg" src="" alt="Медиа экспедиции" />
-        <video id="slideVideo" src="" autoplay loop muted playsinline webkit-playsinline preload="metadata" style="display:none;"></video>
-        
-        <!-- Touch-friendly Safe-zone Sound Button -->
-        <button class="video-sound-btn" id="videoSoundBtn" onclick="toggleSlideVideoAudio(event)" title="Включить / выключить звук" aria-label="Звук">
+      <div class="tg-header-right">
+        <!-- Sound Mute/Unmute Button -->
+        <button class="tg-icon-btn" id="tgSoundBtn" onclick="toggleSlideVideoAudio(event)" title="Звук" aria-label="Звук" style="display:none;">
           <svg id="soundIconMuted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="1" y1="1" x2="23" y2="23"></line>
             <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
@@ -977,51 +653,67 @@ def generate_html(days_data):
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
           </svg>
         </button>
-      </div>
 
-      <div class="slide-sidebar" id="slideSidebar">
-        <div class="slide-meta">
-          <div class="slide-day-tag" id="slideDayTag">
-            <span style="color:var(--accent-gold);">●</span> <span id="slideDayLabel">ДЕНЬ 1</span>
-          </div>
-          <h2 class="slide-title" id="slideTitle">Название локации</h2>
-          <div class="slide-divider"></div>
-          <p class="slide-story" id="slideStory">Художественное описание...</p>
-        </div>
-
-        <div class="slide-controls">
-          <div class="slide-counter" id="slideCounter">1 / 15</div>
-          <div class="slide-nav-buttons">
-            <button class="nav-arrow" onclick="prevSlide(event)" title="Предыдущий (←)">←</button>
-            <button class="nav-arrow" onclick="nextSlide(event)" title="Следующий (→ / Пробел)">→</button>
-          </div>
-        </div>
+        <!-- View Switcher (Slideshow / Album) -->
+        <button class="tg-icon-btn" id="tgViewSwitchBtn" onclick="toggleViewMode(event)" title="Сменить вид" aria-label="Вид">
+          <svg id="iconAlbumView" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <svg id="iconSlideView" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </button>
       </div>
     </div>
 
-    <!-- 2. ALBUM / LONGFROM VIEW -->
-    <div class="album-view" id="albumContainer" style="display: none;"></div>
+    <!-- Frame Counter (like Telegram 7838 из 7845) -->
+    <div class="tg-header-counter-bar" id="tgCounterBar">1 из 15</div>
+  </header>
 
+  <!-- ==========================================================================
+       2. CENTRAL MEDIA VIEWPORT (Full Screen Fit)
+       ========================================================================== -->
+  <main class="tg-media-viewport" id="tgMediaViewport">
+    <div class="title-slide-container" id="titleSlideOverlay" style="display: none;">
+      <div class="title-slide-day" id="titleDayTag">DAY 1</div>
+      <div class="title-slide-route" id="titleRouteText">Маршрут дня</div>
+      <button class="title-slide-btn" onclick="startDaySlides()">Смотреть историю дня</button>
+    </div>
+
+    <img id="slideImg" src="" alt="Медиа экспедиции" />
+    <video id="slideVideo" src="" autoplay loop muted playsinline webkit-playsinline preload="metadata" style="display:none;"></video>
+    
+    <!-- Circular Play/Pause Indicator -->
+    <div class="tg-play-indicator" id="tgPlayIndicator">
+      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+    </div>
   </main>
 
-  <!-- Mobile Floating Bottom Bar (Thumb-friendly UX) -->
-  <aside class="mobile-bottom-bar" id="mobileBottomBar" aria-label="Мобильная навигация">
-    <div class="mobile-day-selector" id="mobileDaySelector"></div>
-    <div class="mobile-view-toggle">
-      <button id="mBtnSlideshow" class="active" onclick="switchView('slideshow')" title="Слайды" aria-label="Слайды">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-      </button>
-      <button id="mBtnAlbum" onclick="switchView('album')" title="Альбом" aria-label="Альбом">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-      </button>
+  <!-- ==========================================================================
+       3. BOTTOM OVERLAY: STORY CAPTION + TELEGRAM TIMELINE
+       ========================================================================== -->
+  <footer class="tg-bottom-overlay" id="tgBottom">
+    <div class="tg-caption-story" id="tgStoryText">Художественное описание...</div>
+    
+    <div class="tg-video-timeline" id="tgTimeline">
+      <div class="tg-timeline-track" id="tgTimelineTrack">
+        <div class="tg-timeline-fill" id="tgTimelineFill"></div>
+      </div>
+      <div class="tg-timeline-timer" id="tgTimelineTimer">00:00 / 00:00</div>
     </div>
-  </aside>
+  </footer>
 
-  <!-- Lightbox Modal -->
-  <div class="lightbox" id="lightboxModal" onclick="closeLightbox()">
-    <img id="lightboxImg" src="" alt="Zoomed" style="display:none;" />
-    <video id="lightboxVideo" src="" controls autoplay loop playsinline webkit-playsinline preload="metadata" style="display:none;"></video>
+  <!-- ==========================================================================
+       4. DAY PICKER DRAWER MODAL
+       ========================================================================== -->
+  <div class="tg-modal-drawer" id="tgDrawerModal" onclick="closeDayDrawer()">
+    <div class="tg-drawer-sheet" onclick="event.stopPropagation()">
+      <div class="tg-drawer-header">
+        <div class="tg-drawer-title">Выбор дня экспедиции</div>
+        <button class="tg-drawer-close" onclick="closeDayDrawer()">✕</button>
+      </div>
+      <div class="tg-drawer-grid" id="tgDrawerGrid"></div>
+    </div>
   </div>
+
+  <!-- 5. LONGFROM ALBUM VIEW (Optional Scrollable Mode) -->
+  <div class="album-view" id="albumContainer" style="display: none;"></div>
 
   <script>
     const daysData = {days_json};
@@ -1039,10 +731,10 @@ def generate_html(days_data):
         tg.enableClosingConfirmation();
       }}
 
-      renderNavPills();
-      renderMobileDaySelector();
+      renderDayDrawer();
       renderAlbumView();
       setupTouchAndTap();
+      setupTimelineSeeking();
       goToDay(0, false);
       
       window.addEventListener('keydown', (e) => {{
@@ -1059,76 +751,64 @@ def generate_html(days_data):
       }});
     }}
 
-    function renderNavPills() {{
-      const container = document.getElementById('dayPillsContainer');
-      container.innerHTML = '';
+    function renderDayDrawer() {{
+      const grid = document.getElementById('tgDrawerGrid');
+      grid.innerHTML = '';
       daysData.forEach((day, index) => {{
         const btn = document.createElement('button');
-        btn.className = 'day-pill' + (index === currentDayIndex ? ' active' : '');
-        btn.textContent = `День ${{day.day_num}}`;
-        btn.onclick = () => goToDay(index, true);
-        container.appendChild(btn);
-      }});
-    }}
-
-    function renderMobileDaySelector() {{
-      const container = document.getElementById('mobileDaySelector');
-      container.innerHTML = '';
-      daysData.forEach((day, index) => {{
-        const btn = document.createElement('button');
-        btn.className = 'mobile-day-pill' + (index === currentDayIndex ? ' active' : '');
+        btn.className = 'tg-drawer-btn' + (index === currentDayIndex ? ' active' : '');
         btn.textContent = `День ${{day.day_num}}`;
         btn.onclick = () => {{
           goToDay(index, true);
-          btn.scrollIntoView({{ behavior: 'smooth', inline: 'center', block: 'nearest' }});
+          closeDayDrawer();
         }};
-        container.appendChild(btn);
+        grid.appendChild(btn);
       }});
     }}
 
-    function updatePills() {{
-      const pills = document.querySelectorAll('.day-pill');
-      pills.forEach((p, idx) => {{
-        if (idx === currentDayIndex) p.classList.add('active');
-        else p.classList.remove('active');
+    function updateDrawerSelection() {{
+      const btns = document.querySelectorAll('.tg-drawer-btn');
+      btns.forEach((b, idx) => {{
+        if (idx === currentDayIndex) b.classList.add('active');
+        else b.classList.remove('active');
       }});
+    }}
 
-      const mPills = document.querySelectorAll('.mobile-day-pill');
-      mPills.forEach((p, idx) => {{
-        if (idx === currentDayIndex) {{
-          p.classList.add('active');
-          p.scrollIntoView({{ behavior: 'smooth', inline: 'center', block: 'nearest' }});
-        }} else {{
-          p.classList.remove('active');
-        }}
-      }});
+    function openDayDrawer(e) {{
+      if (e) e.stopPropagation();
+      document.getElementById('tgDrawerModal').classList.add('active');
+    }}
+
+    function closeDayDrawer() {{
+      document.getElementById('tgDrawerModal').classList.remove('active');
+    }}
+
+    function toggleViewMode(e) {{
+      if (e) e.stopPropagation();
+      switchView(currentView === 'slideshow' ? 'album' : 'slideshow');
     }}
 
     function switchView(view) {{
       currentView = view;
-      const ssContainer = document.getElementById('slideshowContainer');
+      const ssViewport = document.getElementById('tgMediaViewport');
       const alContainer = document.getElementById('albumContainer');
-      const btnSS = document.getElementById('btnSlideshow');
-      const btnAL = document.getElementById('btnAlbum');
-      const mBtnSS = document.getElementById('mBtnSlideshow');
-      const mBtnAL = document.getElementById('mBtnAlbum');
+      const iconAlbum = document.getElementById('iconAlbumView');
+      const iconSlide = document.getElementById('iconSlideView');
+      const bottomOverlay = document.getElementById('tgBottom');
 
       if (view === 'slideshow') {{
-        ssContainer.style.display = 'flex';
+        ssViewport.style.display = 'flex';
+        bottomOverlay.style.display = 'flex';
         alContainer.style.display = 'none';
-        btnSS.classList.add('active');
-        btnAL.classList.remove('active');
-        mBtnSS.classList.add('active');
-        mBtnAL.classList.remove('active');
+        iconAlbum.style.display = 'block';
+        iconSlide.style.display = 'none';
         updateSlideshow();
       }} else {{
-        ssContainer.style.display = 'none';
+        ssViewport.style.display = 'none';
+        bottomOverlay.style.display = 'none';
         alContainer.style.display = 'block';
-        btnSS.classList.remove('active');
-        btnAL.classList.add('active');
-        mBtnSS.classList.remove('active');
-        mBtnAL.classList.add('active');
-        // Restore UI visibility in album mode
+        iconAlbum.style.display = 'none';
+        iconSlide.style.display = 'block';
         if (isUiHidden) toggleUiVisibility();
         const daySec = document.getElementById(`album-day-${{daysData[currentDayIndex].day_num}}`);
         if (daySec) {{
@@ -1140,7 +820,7 @@ def generate_html(days_data):
     function goToDay(dayIndex, showTitle = true) {{
       currentDayIndex = dayIndex;
       currentSlideIndex = 0;
-      updatePills();
+      updateDrawerSelection();
 
       if (currentView === 'slideshow') {{
         if (showTitle) {{
@@ -1175,6 +855,13 @@ def generate_html(days_data):
       updateSlideshow();
     }}
 
+    function formatTime(seconds) {{
+      if (isNaN(seconds)) return "00:00";
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${{m.toString().padStart(2, '0')}}:${{s.toString().padStart(2, '0')}}`;
+    }}
+
     function updateSlideshow() {{
       const dayData = daysData[currentDayIndex];
       if (!dayData || !dayData.slides.length) return;
@@ -1182,9 +869,14 @@ def generate_html(days_data):
       const slide = dayData.slides[currentSlideIndex];
       const img = document.getElementById('slideImg');
       const video = document.getElementById('slideVideo');
-      const soundBtn = document.getElementById('videoSoundBtn');
-      const mediaWrapper = document.getElementById('slideMediaWrapper');
+      const soundBtn = document.getElementById('tgSoundBtn');
+      const timeline = document.getElementById('tgTimeline');
+      const timelineFill = document.getElementById('tgTimelineFill');
+      const timelineTimer = document.getElementById('tgTimelineTimer');
+      const playIndicator = document.getElementById('tgPlayIndicator');
       
+      playIndicator.style.display = 'none';
+
       if (slide.is_video) {{
         img.style.display = 'none';
         video.style.display = 'block';
@@ -1193,39 +885,89 @@ def generate_html(days_data):
         video.muted = true;
         video.load();
         video.play().catch(() => {{}});
-        if (soundBtn) {{
-          soundBtn.style.display = 'flex';
-          updateSoundBtnState(true);
-        }}
+        soundBtn.style.display = 'flex';
+        updateSoundBtnState(true);
+        timeline.style.display = 'flex';
+        timelineFill.style.width = '0%';
+        
         video.onloadedmetadata = () => {{
-          if (video.videoWidth > video.videoHeight) {{
-            mediaWrapper.classList.add('is-landscape');
-          }} else {{
-            mediaWrapper.classList.remove('is-landscape');
+          timelineTimer.textContent = `00:00 / ${{formatTime(video.duration)}}`;
+        }};
+
+        video.ontimeupdate = () => {{
+          if (video.duration) {{
+            const pct = (video.currentTime / video.duration) * 100;
+            timelineFill.style.width = `${{pct}}%`;
+            timelineTimer.textContent = `${{formatTime(video.currentTime)}} / ${{formatTime(video.duration)}}`;
           }}
+        }};
+
+        video.onpause = () => {{
+          playIndicator.style.display = 'flex';
+        }};
+        video.onplay = () => {{
+          playIndicator.style.display = 'none';
         }};
       }} else {{
         video.pause();
         video.removeAttribute('src');
         video.style.display = 'none';
-        if (soundBtn) soundBtn.style.display = 'none';
+        video.ontimeupdate = null;
+        soundBtn.style.display = 'none';
+        timeline.style.display = 'none';
+
         img.style.display = 'block';
         img.style.opacity = '0';
         img.src = slide.media;
         img.onload = () => {{
           img.style.opacity = '1';
-          if (img.naturalWidth > img.naturalHeight) {{
-            mediaWrapper.classList.add('is-landscape');
-          }} else {{
-            mediaWrapper.classList.remove('is-landscape');
-          }}
         }};
       }}
 
-      document.getElementById('slideDayLabel').textContent = `ДЕНЬ ${{dayData.day_num}}`;
-      document.getElementById('slideTitle').textContent = slide.title || 'Красивая точка маршрута';
-      document.getElementById('slideStory').textContent = slide.story;
-      document.getElementById('slideCounter').textContent = `${{currentSlideIndex + 1}} / ${{dayData.slides.length}}`;
+      // Top Header Info
+      document.getElementById('tgLocTitle').textContent = slide.title || `День ${{dayData.day_num}}`;
+      document.getElementById('tgSubMeta').textContent = slide.meta ? `ДЕНЬ ${{dayData.day_num}} • ${{slide.meta}}` : `ДЕНЬ ${{dayData.day_num}} • Экспедиция 2026`;
+      document.getElementById('tgCounterBar').textContent = `${{currentSlideIndex + 1}} из ${{dayData.slides.length}}`;
+
+      // Bottom Story Text
+      document.getElementById('tgStoryText').textContent = slide.story;
+    }}
+
+    function setupTimelineSeeking() {{
+      const track = document.getElementById('tgTimelineTrack');
+      let isSeeking = false;
+
+      function seek(e) {{
+        const video = document.getElementById('slideVideo');
+        if (!video || !video.duration) return;
+        const rect = track.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clickX = clientX - rect.left;
+        const pct = Math.max(0, Math.min(1, clickX / rect.width));
+        video.currentTime = pct * video.duration;
+      }}
+
+      track.addEventListener('mousedown', (e) => {{
+        isSeeking = true;
+        seek(e);
+      }});
+      window.addEventListener('mousemove', (e) => {{
+        if (isSeeking) seek(e);
+      }});
+      window.addEventListener('mouseup', () => {{
+        isSeeking = false;
+      }});
+
+      track.addEventListener('touchstart', (e) => {{
+        isSeeking = true;
+        seek(e);
+      }}, {{ passive: true }});
+      window.addEventListener('touchmove', (e) => {{
+        if (isSeeking) seek(e);
+      }}, {{ passive: true }});
+      window.addEventListener('touchend', () => {{
+        isSeeking = false;
+      }});
     }}
 
     function toggleSlideVideoAudio(e) {{
@@ -1234,19 +976,6 @@ def generate_html(days_data):
       if (!video) return;
       video.muted = !video.muted;
       updateSoundBtnState(video.muted);
-    }}
-
-    function toggleCardVideoAudio(videoEl, btnEl, e) {{
-      if (e) e.stopPropagation();
-      if (!videoEl) return;
-      videoEl.muted = !videoEl.muted;
-      const isMuted = videoEl.muted;
-      const mutedIcon = btnEl.querySelector('.icon-muted');
-      const unmutedIcon = btnEl.querySelector('.icon-unmuted');
-      if (mutedIcon && unmutedIcon) {{
-        mutedIcon.style.display = isMuted ? 'block' : 'none';
-        unmutedIcon.style.display = isMuted ? 'none' : 'block';
-      }}
     }}
 
     function updateSoundBtnState(isMuted) {{
@@ -1258,21 +987,18 @@ def generate_html(days_data):
       }}
     }}
 
-    /* Toggle UI overlay on tap (Stories / Telegram immersive mode) */
+    /* Toggle UI overlay on tap (Native Telegram Media Viewer Immersive Mode) */
     function toggleUiVisibility() {{
       isUiHidden = !isUiHidden;
-      const sidebar = document.getElementById('slideSidebar');
-      const bottomBar = document.getElementById('mobileBottomBar');
-      const topNav = document.getElementById('topNav');
+      const header = document.getElementById('tgHeader');
+      const bottom = document.getElementById('tgBottom');
 
       if (isUiHidden) {{
-        if (sidebar) sidebar.classList.add('ui-hidden');
-        if (bottomBar) bottomBar.classList.add('ui-hidden');
-        if (topNav) topNav.classList.add('ui-hidden');
+        if (header) header.classList.add('ui-hidden');
+        if (bottom) bottom.classList.add('ui-hidden');
       }} else {{
-        if (sidebar) sidebar.classList.remove('ui-hidden');
-        if (bottomBar) bottomBar.classList.remove('ui-hidden');
-        if (topNav) topNav.classList.remove('ui-hidden');
+        if (header) header.classList.remove('ui-hidden');
+        if (bottom) bottom.classList.remove('ui-hidden');
       }}
     }}
 
@@ -1295,25 +1021,24 @@ def generate_html(days_data):
       }} else if (currentDayIndex > 0) {{
         currentDayIndex--;
         currentSlideIndex = daysData[currentDayIndex].slides.length - 1;
-        updatePills();
         updateSlideshow();
       }}
     }}
 
     /* Touch Swiping and Tap Detection for Slideshow */
     function setupTouchAndTap() {{
-      const container = document.getElementById('slideshowContainer');
+      const viewport = document.getElementById('tgMediaViewport');
       let touchStartX = 0;
       let touchStartY = 0;
       let touchStartTime = 0;
 
-      container.addEventListener('touchstart', (e) => {{
+      viewport.addEventListener('touchstart', (e) => {{
         touchStartX = e.changedTouches[0].screenX;
         touchStartY = e.changedTouches[0].screenY;
         touchStartTime = Date.now();
       }}, {{ passive: true }});
 
-      container.addEventListener('touchend', (e) => {{
+      viewport.addEventListener('touchend', (e) => {{
         const touchEndX = e.changedTouches[0].screenX;
         const touchEndY = e.changedTouches[0].screenY;
         const duration = Date.now() - touchStartTime;
@@ -1333,25 +1058,18 @@ def generate_html(days_data):
         // 2. Short Single Tap (< 300ms, minimal movement)
         if (Math.abs(deltaX) < 12 && Math.abs(deltaY) < 12 && duration < 300) {{
           const target = e.target;
-          if (target.closest('.video-sound-btn') || target.closest('.nav-arrow') || target.closest('.title-slide-btn') || target.closest('.mobile-bottom-bar')) {{
+          if (target.closest('.tg-icon-btn') || target.closest('.tg-back-btn') || target.closest('.tg-modal-drawer') || target.closest('.title-slide-btn') || target.closest('.tg-timeline-track')) {{
             return;
           }}
           toggleUiVisibility();
         }}
       }}, {{ passive: true }});
 
-      // Desktop click on media area also toggles UI or can advance
-      const mediaWrapper = document.getElementById('slideMediaWrapper');
-      if (mediaWrapper) {{
-        mediaWrapper.addEventListener('click', (e) => {{
-          if (e.target.closest('.video-sound-btn')) return;
-          if (window.innerWidth <= 768) {{
-            // Handled by touchend on mobile
-          }} else {{
-            toggleUiVisibility();
-          }}
-        }});
-      }}
+      // Desktop click on viewport also toggles UI
+      viewport.addEventListener('click', (e) => {{
+        if (e.target.closest('.tg-icon-btn') || e.target.closest('.title-slide-btn')) return;
+        toggleUiVisibility();
+      }});
     }}
 
     function renderAlbumView() {{
@@ -1379,25 +1097,12 @@ def generate_html(days_data):
           if (slide.is_video) {{
             mediaHtml = `
               <div class="album-image-wrapper">
-                <video src="${{slide.media}}" autoplay loop muted playsinline webkit-playsinline preload="metadata" onclick="openLightbox('${{slide.media}}', true)"></video>
-                <button class="video-sound-btn" style="display:flex;" onclick="toggleCardVideoAudio(this.previousElementSibling, this, event)" title="Включить / выключить звук" aria-label="Звук">
-                  <svg class="icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                    <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
-                    <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
-                    <line x1="12" y1="19" x2="12" y2="23"></line>
-                    <line x1="8" y1="23" x2="16" y2="23"></line>
-                  </svg>
-                  <svg class="icon-unmuted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                  </svg>
-                </button>
+                <video src="${{slide.media}}" autoplay loop muted playsinline webkit-playsinline preload="metadata"></video>
               </div>
             `;
           }} else {{
             mediaHtml = `
-              <div class="album-image-wrapper" onclick="openLightbox('${{slide.media}}', false)">
+              <div class="album-image-wrapper">
                 <img src="${{slide.media}}" alt="${{slide.title}}" loading="lazy" />
               </div>
             `;
@@ -1415,32 +1120,6 @@ def generate_html(days_data):
 
         container.appendChild(section);
       }});
-    }}
-
-    function openLightbox(src, isVideo) {{
-      const modal = document.getElementById('lightboxModal');
-      const img = document.getElementById('lightboxImg');
-      const video = document.getElementById('lightboxVideo');
-
-      if (isVideo) {{
-        img.style.display = 'none';
-        video.style.display = 'block';
-        video.src = src;
-        video.play().catch(() => {{}});
-      }} else {{
-        video.pause();
-        video.style.display = 'none';
-        img.style.display = 'block';
-        img.src = src;
-      }}
-      modal.classList.add('active');
-    }}
-
-    function closeLightbox() {{
-      const modal = document.getElementById('lightboxModal');
-      const video = document.getElementById('lightboxVideo');
-      video.pause();
-      modal.classList.remove('active');
     }}
 
     window.addEventListener('DOMContentLoaded', init);

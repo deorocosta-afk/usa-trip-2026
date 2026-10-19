@@ -8,22 +8,16 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-main: #121212;
-      --bg-card: #1a1a1a;
-      --bg-card-hover: #222222;
+      --bg-black: #000000;
       --accent-gold: #e5b567;
-      --accent-gold-dim: rgba(229, 181, 103, 0.2);
-      --text-main: #f0f0f0;
-      --text-muted: #a0a0a0;
-      --text-dim: #707070;
-      --border: rgba(255, 255, 255, 0.08);
+      --text-white: #ffffff;
+      --text-muted: rgba(255, 255, 255, 0.65);
+      --border-light: rgba(255, 255, 255, 0.15);
       --font-display: 'Cinzel', serif;
       --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      --nav-height: 64px;
-      --bottom-bar-height: 68px;
     }
 
     * {
@@ -32,559 +26,282 @@
       padding: 0;
     }
 
-    body {
-      background-color: var(--bg-main);
-      color: var(--text-main);
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      height: 100svh;
+      background-color: var(--bg-black);
+      color: var(--text-white);
       font-family: var(--font-body);
-      min-height: 100vh;
-      overflow-x: hidden;
+      overflow: hidden;
       -webkit-font-smoothing: antialiased;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
 
-    /* TOP NAVIGATION (Desktop & Tablet) */
-    header.top-nav {
-      position: fixed;
+    /* ==========================================================================
+       1. NATIVE TELEGRAM MEDIA VIEWER HEADER (Top Overlay)
+       ========================================================================== */
+    .tg-header-overlay {
+      position: absolute;
       top: 0;
       left: 0;
       right: 0;
-      height: var(--nav-height);
-      background: rgba(18, 18, 18, 0.88);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 2rem;
-      z-index: 1000;
-      transition: opacity 0.25s ease, transform 0.25s ease;
-    }
-
-    .nav-brand {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      font-family: var(--font-display);
-      font-size: 1.15rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: var(--accent-gold);
-      text-transform: uppercase;
-      cursor: pointer;
-    }
-
-    .nav-brand span.icon {
-      font-size: 1.3rem;
-    }
-
-    .nav-center {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: rgba(255, 255, 255, 0.04);
-      padding: 4px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      max-width: 60vw;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .nav-center::-webkit-scrollbar {
-      display: none;
-    }
-
-    .day-pill {
-      padding: 0.4rem 1rem;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: var(--text-muted);
-      cursor: pointer;
-      background: transparent;
-      border: none;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-    }
-
-    .day-pill:hover {
-      color: var(--text-main);
-      background: rgba(255, 255, 255, 0.06);
-    }
-
-    .day-pill.active {
-      color: #121212;
-      background: var(--accent-gold);
-      font-weight: 600;
-      box-shadow: 0 2px 10px rgba(229, 181, 103, 0.3);
-    }
-
-    .nav-controls {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .view-toggle {
-      display: flex;
-      background: rgba(255, 255, 255, 0.04);
-      border-radius: 8px;
-      padding: 3px;
-      border: 1px solid var(--border);
-    }
-
-    .toggle-btn {
-      padding: 0.4rem 0.85rem;
-      font-size: 0.8rem;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      transition: all 0.2s ease;
-      font-family: var(--font-body);
-    }
-
-    .toggle-btn.active {
-      background: rgba(255, 255, 255, 0.12);
-      color: var(--text-main);
-      font-weight: 500;
-    }
-
-    /* MAIN CONTAINER */
-    main.view-container {
-      margin-top: var(--nav-height);
-      min-height: calc(100vh - var(--nav-height));
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* 1. SLIDESHOW VIEW (Desktop) */
-    .slideshow-view {
-      position: fixed;
-      top: var(--nav-height);
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      background: #0a0a0a;
-      overflow: hidden;
-    }
-
-    .slide-media {
-      flex: 0 0 70%;
-      height: 100%;
-      position: relative;
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      cursor: pointer;
-    }
-
-    .slide-media img, .slide-media video {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      box-shadow: 0 0 40px rgba(0,0,0,0.8);
-      transition: opacity 0.35s ease, transform 0.4s ease;
-    }
-
-    /* Safe-zone Sound Button (Speaker) */
-    .video-sound-btn {
-      position: absolute;
-      top: max(16px, env(safe-area-inset-top, 16px));
-      right: 16px;
-      width: 44px;
-      height: 44px;
-      min-width: 44px;
-      border-radius: 50%;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      color: #ffffff;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 35;
-      transition: transform 0.2s ease, background 0.2s ease, opacity 0.25s ease;
-      touch-action: manipulation;
-    }
-    .video-sound-btn:active {
-      transform: scale(0.92);
-      background: rgba(229, 181, 103, 0.85);
-      color: #121212;
-    }
-    .video-sound-btn svg {
-      width: 20px;
-      height: 20px;
-      pointer-events: none;
-    }
-
-    .slide-sidebar {
-      flex: 0 0 30%;
-      height: 100%;
-      background: #141414;
-      border-left: 1px solid var(--border);
+      z-index: 30;
+      padding: 12px 16px 18px 16px;
+      padding-top: max(12px, env(safe-area-inset-top, 12px));
+      background: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      padding: 3rem 2.5rem;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      gap: 6px;
       transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
     }
 
-    .slide-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-    }
-
-    .slide-day-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-family: var(--font-display);
-      font-size: 0.85rem;
-      color: var(--accent-gold);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    .slide-title {
-      font-size: 1.75rem;
-      font-weight: 600;
-      line-height: 1.3;
-      color: var(--text-main);
-      letter-spacing: -0.01em;
-    }
-
-    .slide-divider {
-      width: 40px;
-      height: 2px;
-      background: var(--accent-gold);
-      opacity: 0.8;
-    }
-
-    .slide-story {
-      font-size: 1.05rem;
-      line-height: 1.75;
-      color: #d0d0d0;
-      font-weight: 300;
-      user-select: text;
-    }
-
-    .slide-controls {
+    .tg-header-top-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-top: 1.5rem;
-      border-top: 1px solid var(--border);
+      gap: 12px;
+      width: 100%;
     }
 
-    .slide-counter {
-      font-size: 0.9rem;
-      color: var(--text-dim);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .slide-nav-buttons {
+    .tg-header-left {
       display: flex;
-      gap: 0.75rem;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1;
     }
 
-    .nav-arrow {
-      width: 48px;
-      height: 48px;
-      min-width: 48px;
+    .tg-back-btn {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      color: var(--text-main);
-      cursor: pointer;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
-      transition: all 0.2s ease;
+      cursor: pointer;
       touch-action: manipulation;
     }
-
-    .nav-arrow:hover {
-      background: var(--accent-gold);
-      color: #121212;
-      border-color: var(--accent-gold);
+    .tg-back-btn svg {
+      width: 20px;
+      height: 20px;
     }
 
-    .nav-arrow:active {
-      transform: scale(0.92);
-    }
-
-    /* Title Screen Overlay */
-    .title-slide-container {
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at center, #1e1e1e 0%, #0d0d0d 100%);
+    .tg-header-titles {
       display: flex;
       flex-direction: column;
+      min-width: 0;
+    }
+
+    .tg-header-loc-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .tg-header-submeta {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+      margin-top: 1px;
+    }
+
+    .tg-header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tg-icon-btn {
+      width: 38px;
+      height: 38px;
+      min-width: 38px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      display: flex;
       align-items: center;
       justify-content: center;
-      text-align: center;
-      padding: 2.5rem 1.5rem;
-      z-index: 40;
-    }
-
-    .title-slide-day {
-      font-family: var(--font-display);
-      font-size: 1.25rem;
-      color: var(--accent-gold);
-      letter-spacing: 0.2em;
-      margin-bottom: 1rem;
-      text-transform: uppercase;
-    }
-
-    .title-slide-route {
-      font-size: 2.2rem;
-      font-weight: 700;
-      max-width: 850px;
-      line-height: 1.3;
-      margin-bottom: 2rem;
-      color: #fff;
-    }
-
-    .title-slide-btn {
-      padding: 0.9rem 2.2rem;
-      background: var(--accent-gold);
-      color: #121212;
-      border: none;
-      border-radius: 999px;
-      font-weight: 600;
-      font-size: 1rem;
       cursor: pointer;
-      box-shadow: 0 4px 20px rgba(229, 181, 103, 0.3);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
       touch-action: manipulation;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .tg-icon-btn:active {
+      transform: scale(0.92);
+      background: rgba(255, 255, 255, 0.25);
+    }
+    .tg-icon-btn svg {
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
     }
 
-    .title-slide-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 25px rgba(229, 181, 103, 0.45);
-    }
-
-    /* 2. LONGFROM / ALBUM VIEW */
-    .album-view {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 3.5rem 2rem 8rem;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .album-day-section {
-      margin-bottom: 5rem;
-    }
-
-    .album-day-header {
+    /* Compact Frame Counter (like Telegram 7838 из 7845) */
+    .tg-header-counter-bar {
       text-align: center;
-      margin-bottom: 3rem;
-      padding-bottom: 2rem;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .album-day-tag {
-      font-family: var(--font-display);
-      font-size: 0.95rem;
-      color: var(--accent-gold);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      margin-bottom: 0.6rem;
-    }
-
-    .album-day-title {
-      font-size: 2.1rem;
-      font-weight: 700;
-      line-height: 1.3;
+      font-size: 13px;
+      font-weight: 500;
       color: #ffffff;
+      letter-spacing: 0.2px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+      user-select: none;
     }
 
-    .album-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      margin-bottom: 3.5rem;
+    /* ==========================================================================
+       2. CENTRAL MEDIA DISPLAY (Fit with zero cropping)
+       ========================================================================== */
+    .tg-media-viewport {
+      position: absolute;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100svh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000000;
       overflow: hidden;
-      box-shadow: 0 16px 36px rgba(0,0,0,0.4);
-      transition: transform 0.3s ease, border-color 0.3s ease;
+      z-index: 10;
     }
 
-    .album-card:hover {
-      border-color: rgba(229, 181, 103, 0.3);
-      transform: translateY(-3px);
-    }
-
-    .album-image-wrapper {
-      position: relative;
-      background: #000;
-      width: 100%;
-      height: 580px;
-      cursor: zoom-in;
-      overflow: hidden;
-    }
-
-    .album-image-wrapper img, .album-image-wrapper video {
+    .tg-media-viewport img,
+    .tg-media-viewport video {
       width: 100%;
       height: 100%;
-      object-fit: cover;
-      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain; /* Full frame fits without cropping */
       display: block;
+      background: #000000;
+      cursor: pointer;
     }
 
-    .album-image-wrapper:hover img {
-      transform: scale(1.02);
-    }
-
-    .album-caption {
-      padding: 2.2rem 2.5rem;
-    }
-
-    .album-loc-title {
-      font-size: 1.45rem;
-      font-weight: 600;
-      color: var(--text-main);
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: baseline;
-      gap: 0.5rem;
-    }
-
-    .album-story {
-      font-size: 1.05rem;
-      line-height: 1.75;
-      color: #c8c8c8;
-      font-weight: 300;
-      user-select: text;
-    }
-
-    /* Lightbox Modal */
-    .lightbox {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.95);
-      z-index: 3000;
+    /* Circular Play/Pause Indicator (Overlay like Instagram/Telegram) */
+    .tg-play-indicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 1.5rem;
-      cursor: zoom-out;
+      z-index: 15;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .tg-play-indicator svg {
+      width: 28px;
+      height: 28px;
+      fill: #ffffff;
+      margin-left: 3px;
     }
 
-    .lightbox.active {
-      display: flex;
-      animation: fadeIn 0.2s ease forwards;
-    }
-
-    .lightbox img, .lightbox video {
-      max-width: 95vw;
-      max-height: 92vh;
-      object-fit: contain;
-      border-radius: 8px;
-      box-shadow: 0 0 50px rgba(0,0,0,0.9);
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    /* MOBILE FLOATING BOTTOM BAR */
-    .mobile-bottom-bar {
-      display: none;
-      position: fixed;
+    /* ==========================================================================
+       3. BOTTOM OVERLAY: STORY CAPTION + CUSTOM TELEGRAM TIMELINE
+       ========================================================================== */
+    .tg-bottom-overlay {
+      position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      height: var(--bottom-bar-height);
-      background: rgba(18, 18, 18, 0.94);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid var(--border);
-      z-index: 1000;
-      padding: 0 1rem;
-      padding-bottom: env(safe-area-inset-bottom, 0px);
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 30;
+      padding: 36px 16px calc(env(safe-area-inset-bottom, 12px) + 14px) 16px;
+      background: linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.78) 60%, transparent 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      pointer-events: auto;
+      transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
     }
 
-    .mobile-day-selector {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      flex: 1;
-      overflow-x: auto;
-      scrollbar-width: none;
+    /* Caption Story Text */
+    .tg-caption-story {
+      font-size: 14px;
+      line-height: 1.44;
+      color: #ffffff;
+      text-align: left;
+      font-weight: 400;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+      user-select: text;
+      margin-bottom: 14px;
+      max-height: 32vh;
+      overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 4px 0;
-    }
-    .mobile-day-selector::-webkit-scrollbar {
-      display: none;
+      scrollbar-width: thin;
     }
 
-    .mobile-day-pill {
-      padding: 0.45rem 0.9rem;
-      min-height: 38px;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: var(--text-muted);
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      white-space: nowrap;
-      cursor: pointer;
-      touch-action: manipulation;
-    }
-    .mobile-day-pill.active {
-      color: #121212;
-      background: var(--accent-gold);
-      border-color: var(--accent-gold);
-      font-weight: 600;
-    }
-
-    .mobile-view-toggle {
-      display: flex;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 2px;
-      min-width: 90px;
-    }
-    .mobile-view-toggle button {
-      flex: 1;
-      height: 38px;
-      min-width: 44px;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      border-radius: 8px;
-      cursor: pointer;
+    /* Custom Telegram Video Timeline Bar */
+    .tg-video-timeline {
       display: flex;
       align-items: center;
-      justify-content: center;
-      touch-action: manipulation;
-    }
-    .mobile-view-toggle button.active {
-      background: rgba(255, 255, 255, 0.15);
-      color: var(--text-main);
+      gap: 12px;
+      width: 100%;
+      padding-top: 4px;
     }
 
-    /* UI HIDDEN STATE FOR IMMERSIVE TAP (Stories / Telegram UI) */
+    .tg-timeline-track {
+      flex: 1;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    .tg-timeline-fill {
+      height: 100%;
+      background: #ffffff;
+      border-radius: 999px;
+      width: 0%;
+      position: relative;
+    }
+
+    /* Telegram Circular Playhead Scrubber */
+    .tg-timeline-fill::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: -4px;
+      width: 12px;
+      height: 12px;
+      background: #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    }
+
+    .tg-timeline-timer {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.88);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    /* UI HIDDEN STATE (Tap to Hide / Immersive Clean Screen) */
     .ui-hidden {
       opacity: 0 !important;
       pointer-events: none !important;
@@ -592,254 +309,203 @@
       visibility: hidden !important;
     }
 
-    /* ==========================================================================
-       RESPONSIVE & MOBILE-FIRST STORIES / TELEGRAM WEB APP UX (Screens < 768px)
-       ========================================================================== */
-    @media (max-width: 768px) {
-      :root {
-        --nav-height: 50px;
-      }
+    /* Day Picker Modal Drawer */
+    .tg-modal-drawer {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .tg-modal-drawer.active {
+      display: flex;
+    }
+    .tg-drawer-sheet {
+      width: 100%;
+      max-height: 70vh;
+      background: #1c1c1c;
+      border-radius: 16px 16px 0 0;
+      padding: 1.5rem 1rem calc(env(safe-area-inset-bottom, 12px) + 1rem);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      border-top: 1px solid var(--border-light);
+    }
+    .tg-drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .tg-drawer-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent-gold);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .tg-drawer-close {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .tg-drawer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 0.6rem;
+      overflow-y: auto;
+      max-height: 50vh;
+    }
+    .tg-drawer-btn {
+      padding: 0.75rem 0.5rem;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+    .tg-drawer-btn.active {
+      background: var(--accent-gold);
+      color: #000;
+      font-weight: 700;
+    }
 
-      /* Top navigation minimal */
-      header.top-nav {
-        padding: 0 1rem;
-        height: var(--nav-height);
-        background: rgba(10, 10, 10, 0.7);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-      }
-      .nav-center, .nav-controls {
-        display: none !important;
-      }
-      .mobile-bottom-bar {
-        display: flex;
-      }
+    /* Title Screen Overlay */
+    .title-slide-container {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, #1c1c1c 0%, #000000 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      z-index: 50;
+    }
 
-      /* FULLSCREEN STORIES SLIDESHOW CONTAINER */
-      .slideshow-view {
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        width: 100vw !important;
-        height: 100svh !important;
-        height: 100vh !important;
-        position: fixed !important;
-        overflow: hidden !important;
-        background: #000 !important;
-        display: flex;
-        flex-direction: column;
-      }
+    .title-slide-day {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: var(--accent-gold);
+      letter-spacing: 0.2em;
+      margin-bottom: 0.8rem;
+      text-transform: uppercase;
+    }
 
-      /* Media occupies full screen like Telegram Stories */
-      .slide-media {
-        position: absolute !important;
-        inset: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        flex: none !important;
-        background: #000 !important;
-        z-index: 10 !important;
-        touch-action: none;
-      }
+    .title-slide-route {
+      font-size: 1.8rem;
+      font-weight: 700;
+      max-width: 700px;
+      line-height: 1.35;
+      margin-bottom: 1.8rem;
+      color: #fff;
+    }
 
-      .slide-media img, .slide-media video {
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: cover !important; /* Portrait filled like Stories */
-        display: block !important;
-        box-shadow: none !important;
-      }
+    .title-slide-btn {
+      padding: 0.85rem 2rem;
+      background: var(--accent-gold);
+      color: #121212;
+      border: none;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(229, 181, 103, 0.35);
+      transition: transform 0.2s ease;
+      touch-action: manipulation;
+    }
 
-      /* Horizontal landscape videos/photos fit with black background */
-      .slide-media.is-landscape img,
-      .slide-media.is-landscape video {
-        object-fit: contain !important;
-        background: #000 !important;
-      }
-
-      .video-sound-btn {
-        display: flex;
-      }
-
-      /* CAPTION OVERLAY: Compact semi-transparent gradient on bottom */
-      .slide-sidebar {
-        position: absolute !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100% !important;
-        max-height: 48vh !important;
-        height: auto !important;
-        flex: none !important;
-        background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, rgba(0,0,0,0) 100%) !important;
-        border-left: none !important;
-        border-top: none !important;
-        padding: 50px 16px max(74px, calc(env(safe-area-inset-bottom, 16px) + 64px)) 16px !important;
-        z-index: 20 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: flex-end !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        pointer-events: auto;
-      }
-
-      .slide-meta {
-        gap: 0.35rem !important;
-      }
-
-      .slide-day-tag {
-        font-size: 11px !important;
-        opacity: 0.85;
-        letter-spacing: 0.6px;
-      }
-
-      .slide-title {
-        font-size: 13px !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
-        color: var(--accent-gold) !important;
-        line-height: 1.3 !important;
-      }
-
-      .slide-divider {
-        display: none !important;
-      }
-
-      .slide-story {
-        font-size: 13.5px !important;
-        line-height: 1.45 !important;
-        color: #f0f0f0 !important;
-        font-weight: 400 !important;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.9) !important;
-        margin-top: 2px !important;
-      }
-
-      .slide-controls {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        padding-top: 0.6rem !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-        margin-top: 0.5rem !important;
-      }
-
-      .slide-counter {
-        font-size: 11.5px !important;
-        color: var(--accent-gold) !important;
-      }
-
-      .slide-nav-buttons {
-        gap: 0.5rem !important;
-      }
-
-      .nav-arrow {
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
-        font-size: 1rem !important;
-        background: rgba(255, 255, 255, 0.12) !important;
-      }
-
-      .title-slide-container {
-        padding: 2rem 1.5rem !important;
-      }
-      .title-slide-route {
-        font-size: 1.5rem !important;
-        line-height: 1.35 !important;
-        margin-bottom: 1.5rem !important;
-      }
-
-      /* Longform / Album in Mobile */
-      .album-view {
-        padding: 1.25rem 0.85rem calc(var(--bottom-bar-height) + 2rem) !important;
-      }
-
-      .album-day-section {
-        margin-bottom: 3.5rem !important;
-      }
-
-      .album-day-header {
-        margin-bottom: 2rem !important;
-        padding-bottom: 1.25rem !important;
-      }
-      .album-day-title {
-        font-size: 1.45rem !important;
-        line-height: 1.3 !important;
-      }
-
-      .album-card {
-        border-radius: 12px !important;
-        margin-bottom: 2.25rem !important;
-      }
-
-      .album-image-wrapper {
-        height: auto !important;
-        aspect-ratio: 16 / 9 !important;
-        max-height: 60vh !important;
-      }
-
-      .album-caption {
-        padding: 1.25rem 1rem 1.4rem !important;
-      }
-
-      .album-loc-title {
-        font-size: 1.2rem !important;
-        line-height: 1.35 !important;
-        margin-bottom: 0.75rem !important;
-      }
-
-      .album-story {
-        font-size: 0.98rem !important;
-        line-height: 1.65 !important;
-        color: #d0d0d0 !important;
-      }
+    /* Album / Longform View Container */
+    .album-view {
+      position: absolute;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow-y: auto;
+      background: #0d0d0d;
+      padding: calc(env(safe-area-inset-top, 20px) + 50px) 1.25rem 5rem;
+      z-index: 10;
+      -webkit-overflow-scrolling: touch;
+    }
+    .album-day-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .album-day-tag {
+      font-size: 12px;
+      color: var(--accent-gold);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .album-day-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .album-card {
+      background: #181818;
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      margin-bottom: 2.5rem;
+      overflow: hidden;
+    }
+    .album-image-wrapper {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      background: #000;
+    }
+    .album-image-wrapper img, .album-image-wrapper video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .album-caption {
+      padding: 1.25rem 1rem;
+    }
+    .album-loc-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.6rem;
+    }
+    .album-story {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #d0d0d0;
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Navigation (Desktop / Mobile brand) -->
-  <header class="top-nav" id="topNav">
-    <div class="nav-brand" onclick="goToDay(0, true)">
-      <span class="icon">🏔️</span> California 2026
-    </div>
-
-    <div class="nav-center" id="dayPillsContainer"></div>
-
-    <div class="nav-controls">
-      <div class="view-toggle">
-        <button class="toggle-btn active" id="btnSlideshow" onclick="switchView('slideshow')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          Слайд-шоу
+  <!-- ==========================================================================
+       1. NATIVE TELEGRAM MEDIA VIEWER HEADER (Top Overlay)
+       ========================================================================== -->
+  <header class="tg-header-overlay" id="tgHeader">
+    <div class="tg-header-top-row">
+      <div class="tg-header-left">
+        <button class="tg-back-btn" onclick="openDayDrawer(event)" title="Выбрать день" aria-label="Выбрать день">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </button>
-        <button class="toggle-btn" id="btnAlbum" onclick="switchView('album')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          Фотоальбом
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- View Container -->
-  <main class="view-container">
-    
-    <!-- 1. SLIDESHOW VIEW -->
-    <div class="slideshow-view" id="slideshowContainer">
-      <div class="title-slide-container" id="titleSlideOverlay" style="display: none;">
-        <div class="title-slide-day" id="titleDayTag">DAY 1</div>
-        <div class="title-slide-route" id="titleRouteText">Маршрут дня</div>
-        <button class="title-slide-btn" onclick="startDaySlides()">Смотреть историю дня</button>
+        <div class="tg-header-titles">
+          <div class="tg-header-loc-title" id="tgLocTitle">Загрузка...</div>
+          <div class="tg-header-submeta" id="tgSubMeta">Калифорния 2026</div>
+        </div>
       </div>
 
-      <div class="slide-media" id="slideMediaWrapper">
-        <img id="slideImg" src="" alt="Медиа экспедиции" />
-        <video id="slideVideo" src="" autoplay loop muted playsinline webkit-playsinline preload="metadata" style="display:none;"></video>
-        
-        <!-- Touch-friendly Safe-zone Sound Button -->
-        <button class="video-sound-btn" id="videoSoundBtn" onclick="toggleSlideVideoAudio(event)" title="Включить / выключить звук" aria-label="Звук">
+      <div class="tg-header-right">
+        <!-- Sound Mute/Unmute Button -->
+        <button class="tg-icon-btn" id="tgSoundBtn" onclick="toggleSlideVideoAudio(event)" title="Звук" aria-label="Звук" style="display:none;">
           <svg id="soundIconMuted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="1" y1="1" x2="23" y2="23"></line>
             <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
@@ -852,51 +518,67 @@
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
           </svg>
         </button>
-      </div>
 
-      <div class="slide-sidebar" id="slideSidebar">
-        <div class="slide-meta">
-          <div class="slide-day-tag" id="slideDayTag">
-            <span style="color:var(--accent-gold);">●</span> <span id="slideDayLabel">ДЕНЬ 1</span>
-          </div>
-          <h2 class="slide-title" id="slideTitle">Название локации</h2>
-          <div class="slide-divider"></div>
-          <p class="slide-story" id="slideStory">Художественное описание...</p>
-        </div>
-
-        <div class="slide-controls">
-          <div class="slide-counter" id="slideCounter">1 / 15</div>
-          <div class="slide-nav-buttons">
-            <button class="nav-arrow" onclick="prevSlide(event)" title="Предыдущий (←)">←</button>
-            <button class="nav-arrow" onclick="nextSlide(event)" title="Следующий (→ / Пробел)">→</button>
-          </div>
-        </div>
+        <!-- View Switcher (Slideshow / Album) -->
+        <button class="tg-icon-btn" id="tgViewSwitchBtn" onclick="toggleViewMode(event)" title="Сменить вид" aria-label="Вид">
+          <svg id="iconAlbumView" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <svg id="iconSlideView" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </button>
       </div>
     </div>
 
-    <!-- 2. ALBUM / LONGFROM VIEW -->
-    <div class="album-view" id="albumContainer" style="display: none;"></div>
+    <!-- Frame Counter (like Telegram 7838 из 7845) -->
+    <div class="tg-header-counter-bar" id="tgCounterBar">1 из 15</div>
+  </header>
 
+  <!-- ==========================================================================
+       2. CENTRAL MEDIA VIEWPORT (Full Screen Fit)
+       ========================================================================== -->
+  <main class="tg-media-viewport" id="tgMediaViewport">
+    <div class="title-slide-container" id="titleSlideOverlay" style="display: none;">
+      <div class="title-slide-day" id="titleDayTag">DAY 1</div>
+      <div class="title-slide-route" id="titleRouteText">Маршрут дня</div>
+      <button class="title-slide-btn" onclick="startDaySlides()">Смотреть историю дня</button>
+    </div>
+
+    <img id="slideImg" src="" alt="Медиа экспедиции" />
+    <video id="slideVideo" src="" autoplay loop muted playsinline webkit-playsinline preload="metadata" style="display:none;"></video>
+    
+    <!-- Circular Play/Pause Indicator -->
+    <div class="tg-play-indicator" id="tgPlayIndicator">
+      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+    </div>
   </main>
 
-  <!-- Mobile Floating Bottom Bar (Thumb-friendly UX) -->
-  <aside class="mobile-bottom-bar" id="mobileBottomBar" aria-label="Мобильная навигация">
-    <div class="mobile-day-selector" id="mobileDaySelector"></div>
-    <div class="mobile-view-toggle">
-      <button id="mBtnSlideshow" class="active" onclick="switchView('slideshow')" title="Слайды" aria-label="Слайды">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-      </button>
-      <button id="mBtnAlbum" onclick="switchView('album')" title="Альбом" aria-label="Альбом">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-      </button>
+  <!-- ==========================================================================
+       3. BOTTOM OVERLAY: STORY CAPTION + TELEGRAM TIMELINE
+       ========================================================================== -->
+  <footer class="tg-bottom-overlay" id="tgBottom">
+    <div class="tg-caption-story" id="tgStoryText">Художественное описание...</div>
+    
+    <div class="tg-video-timeline" id="tgTimeline">
+      <div class="tg-timeline-track" id="tgTimelineTrack">
+        <div class="tg-timeline-fill" id="tgTimelineFill"></div>
+      </div>
+      <div class="tg-timeline-timer" id="tgTimelineTimer">00:00 / 00:00</div>
     </div>
-  </aside>
+  </footer>
 
-  <!-- Lightbox Modal -->
-  <div class="lightbox" id="lightboxModal" onclick="closeLightbox()">
-    <img id="lightboxImg" src="" alt="Zoomed" style="display:none;" />
-    <video id="lightboxVideo" src="" controls autoplay loop playsinline webkit-playsinline preload="metadata" style="display:none;"></video>
+  <!-- ==========================================================================
+       4. DAY PICKER DRAWER MODAL
+       ========================================================================== -->
+  <div class="tg-modal-drawer" id="tgDrawerModal" onclick="closeDayDrawer()">
+    <div class="tg-drawer-sheet" onclick="event.stopPropagation()">
+      <div class="tg-drawer-header">
+        <div class="tg-drawer-title">Выбор дня экспедиции</div>
+        <button class="tg-drawer-close" onclick="closeDayDrawer()">✕</button>
+      </div>
+      <div class="tg-drawer-grid" id="tgDrawerGrid"></div>
+    </div>
   </div>
+
+  <!-- 5. LONGFROM ALBUM VIEW (Optional Scrollable Mode) -->
+  <div class="album-view" id="albumContainer" style="display: none;"></div>
 
   <script>
     const daysData = [
@@ -909,78 +591,91 @@
         "media": "./Photos_web/20260531_084059.mp4",
         "is_video": true,
         "title": "Старт из Сан-Матео — Мост Сан-Матео–Хейворд через залив",
+        "meta": "Время: 08:40 • CA-92 East",
         "story": "Наше большое 28-дневное путешествие официально начинается! Выехав воскресным утром из Сан-Матео на восток, мы вырываемся на простор легендарного моста *San Mateo–Hayward Bridge* (трасса CA-92) — самого длинного моста Калифорнии и всей области залива Сан-Франциско, протянувшегося над водой ровно на 11,3 километра (7 миль). С вершины высокого судоходного пролёта открывается бесконечная перспектива низководной эстакады, которая, словно взлётная полоса, стелется почти вровень со стальной гладью залива параллельно ажурным мачтам линии электропередач. Утреннее солнце бьёт прямо в лобовое стекло, полосы воскресного хайвея свободны, а впереди на восточном берегу уже проступают золотистые холмы и силуэт горы Маунт-Дьябло — первой вершины нашего маршрута."
       },
       {
         "media": "./Photos_web/20260531_084344.jpg",
         "is_video": false,
         "title": "Mount Diablo State Park — South Gate Road (Высота: ~650 м)",
+        "meta": "Время: 08:43 • Samsung SM-S908U1 / 25mm (1x Основа)",
         "story": "Утреннее солнце щедро заливает салон, пока мы начинаем затяжной подъём по первым виражам South Gate Road в предвкушении нашей стартовой вершины. В дорожном плане мы по привычке окрестили Маунт-Дьябло вулканом, но уже на подъёме выясняется любопытный парадокс: эта гора вздыбилась вовсе не от извержения, а из-за мощного столкновения и сжатия земной коры. Впрочем, следы древнего огня здесь всё же есть — прямо вдоль серпантина лежат тёмные подушечные базальты, рождённые подводными вулканами на дне океана и поднятые тектоническими плитами на километровые высоты."
       },
       {
         "media": "./Photos_web/20260531_084420.jpg",
         "is_video": false,
         "title": "Mount Diablo State Park — South Gate Road (Серпантин) (Высота: ~680 м)",
+        "meta": "Время: 08:44 • Samsung SM-S908U1 / 25mm (1x Основа)",
         "story": "За три километра до вершины уклон становится серьёзным, и мы честно выполняем главное правило нашего путевого листа: гасим кондиционер и настежь открываем окна вместе с люком, чтобы не перегреть мотор на крутых шпильках. В салон тут же врывается сухой, прогретый солнцем горный ветер и ослепительная синева калифорнийского неба. Городская суета залива Сан-Франциско окончательно остаётся где-то далеко внизу, уступая место чистой эйфории начавшегося большого путешествия."
       },
       {
         "media": "./Photos_web/20260531_093337.mp4",
         "is_video": true,
         "title": "Подъём по серпантину к вершине Маунт-Дьябло (Высота: ~850 м)",
+        "meta": "Время: 09:33 • South Gate & Summit Road",
         "story": "Вираж за виражом мы уходим всё выше по узкой ленте горного асфальта, где рядом с двойной жёлтой сплошной специально размечена полоса для отчаянных калифорнийских велогонщиков, штурмующих этот перевал своим ходом. За правым бортом, прямо за кустами серебристой полыни и чапарраля, далеко внизу расстилается классический пейзаж внутренней Калифорнии: бархатные золотистые холмы долины Сан-Рамон, расшитые тёмно-зелёными кронами вековых калифорнийских дубов, а впереди за каждым новым поворотом среди песчаниковых валунов и серых сосен мы приближаемся к главной смотровой площадке Маунт-Дьябло."
       },
       {
         "media": "./Photos_web/20260531_100801.jpg",
         "is_video": false,
         "title": "Mount Diablo Summit — Observation Deck & Visitor Center (Высота: 1148 м)",
+        "meta": "Время: 10:08 • Samsung Galaxy S25+ / 25mm (1x Основа)",
         "story": "На самом пике Маунт-Дьябло мы мгновенно понимаем, почему так настойчиво держали тёплые флиски под рукой: на высоте 1148 метров нас встречает ледяной, пронизывающий ветер, под которым мы с удовольствием кутаемся в капюшоны у каменного парапета. Позади нас возвышается суровая башня визит-центра, сложенная в конце 1930-х годов рабочими Гражданского корпуса из местного песчаника — если присмотреться к её стенам, в камне до сих пор проступают отпечатки доисторических морских раковин. Стоя здесь, трудно поверить, что именно от этого пятачка с 1851 года отсчитывается главный геодезический меридиан, к которому привязаны границы земель на двух третях территории Калифорнии и во всей Неваде."
       },
       {
         "media": "./Photos_web/20260531_100643.mp4",
         "is_video": true,
         "title": "Вершина Mount Diablo",
+        "meta": "Время: 10:06",
         "story": "Мы обходим стальные перила верхней террасы башни-обсерватории и замираем над крутым зелёным склоном горы. Здесь, на высоте больше километра, тугой ледяной ветер гудит в ушах, а далеко внизу, за густыми зарослями горного чапараля и скалистыми выступами, до самого горизонта расстилается залитая утренним солнцем долина Контра-Коста."
       },
       {
         "media": "./Photos_web/20260531_120528.jpg",
         "is_video": false,
         "title": "Подножие Маунт-Дьябло — район Clayton / Concord (Высота: 73 м)",
+        "meta": "Время: 12:05 • Samsung Galaxy S25+ / 23mm (1x Основа)",
         "story": "Спустившись с горы на пониженной передаче и дав отдохнуть тормозам, мы возвращаемся в тёплое лето долины и устраиваем лёгкий пит-стоп у подножия хребта, ловя своё отражение в зеркале во время неспешного дневного шопинга. Соседний старинный городок Клейтон, выросший здесь ещё в 1857 году стараниями английского переселенца Джоэла Клейтона вокруг лавок для угольных шахтёров, встречает нас деревянными фасадами в духе Дикого Запада и расслабленной тишиной без единой туристической толпы."
       },
       {
         "media": "./Photos_web/20260531_141015.mp4",
         "is_video": true,
         "title": "Дельта Сакраменто и ветрогенераторы Монтесума-Хиллз",
+        "meta": "Время: 14:10",
         "story": "Вырвавшись на двухполосное шоссе Hwy 160 вдоль воды, мы ловим гипнотический ритм речной дельты: на выжженных солнцем бархатных холмах Монтесума-Хиллз сотни белоснежных ветряков синхронно вращают лопастями, провожая нашу машину в сторону старых паромных переправ."
       },
       {
         "media": "./Photos_web/20260531_145913.mp4",
         "is_video": true,
         "title": "Locke Historic District (Main Street)",
+        "meta": "Время: 14:59",
         "story": "Мы идём под деревянными навесами главной улочки Локка — единственного в США города, основанного китайскими иммигрантами в 1915 году, — и разглядываем покосившиеся двухэтажные фасады из потемневшего секвойного дерева с резными балконами. Мимо проплывают винтажная вывеска легендарного салуна Al the Wop's, старинный бывший игорный дом Dai Loy Museum и белый классический универсал 1960-х, дополняющий ощущение ожившей декорации столетней давности."
       },
       {
         "media": "./Photos_web/20260531_150000.mp4",
         "is_video": true,
         "title": "Locke — История рождения города, Star Theatre и деревянные проулки",
+        "meta": "Время: 15:00",
         "story": "Мы сворачиваем с главной галереи к выцветшей деревянной арке бывшего кинотеатра **Star Theatre** и идём по скрипучему деревянному настилу бокового проулка между двухэтажными домами. Само рождение этого поселения похоже на притчу: 7 октября 1915 года страшный пожар дотла сжёг деревянный Чайнатаун соседнего Уолнат-Гроув, оставив сотни рабочих без крова. Тогда выходцы из уезда Чжуншань (провинция Гуандун) во главе с предприимчивым торговцем Ли Бином решили больше не селиться в чужих кварталах, а основать собственный город чуть севернее по реке. Поскольку суровый калифорнийский «Закон об иностранном землевладении» 1913 года (*Alien Land Law*) запрещал выходцам из Азии покупать землю в собственность, Ли Бин заключил джентльменский договор с владельцем фруктовых садов Джорджем Локком (*George Locke*): китайская община арендовала у него участок земли (изначально 10, а затем 14 акров) с правом строить дома по своим правилам. Причём из-за мощной речной дамбы в Локке сложилась уникальная двухуровневая архитектура: фасады и входы на Main Street находятся на уровне второго этажа (вровень с гребнем дамбы), а первые этажи и хозяйственные переулки уходят вниз, к плодородной пойме."
       },
       {
         "media": "./Photos_web/20260531_150122.mp4",
         "is_video": true,
         "title": "Locke — Традиционная китайская медицина, обереги и живой быт общины",
+        "meta": "Время: 15:01",
         "story": "Продолжая прогулку по тихим уголкам Локка, мы останавливаемся у старинного крыльца лавки традиционной китайской медицины (*Traditional Chinese Medicine — Acupuncture & Moxibustion*). За выцветшими деревянными стенами скрывается целый пласт истории калифорнийской дельты: именно китайские переселенцы во второй половине XIX века вручную, лопатами и тачками, насыпали сотни километров земляных дамб, превратив непроходимые камышовые болота Сакраменто в житницу страны и мировую столицу спаржи и груш сорта «Бартлетт». На пике расцвета в 1920-х годах в крошечном Локке постоянно жили около 600 человек, а в сезон сбора урожая и работы консервных заводов население вырастало до полутора тысяч: здесь кипела жизнь в чайных, травяных аптеках, пекарнях, шести ресторанах и знаменитых игорных домах на главной улице. И сегодня этот быт не превратился в бездушную витрину: на ярко-красной двери всё так же сияют золотые иероглифы здоровья и долголетия (*«Кан»* и *«Шоу»*), на стенах висят медные рыбы-обереги, приносящие достаток, а вокруг на старых этажерках зеленеют домашние суккуленты и садовые диковинки местных жителей."
       },
       {
         "media": "./Photos_web/20260531_152320.mp4",
         "is_video": true,
         "title": "Joe Shoong Chinese School (1929) — Учебный класс сквозь десятилетия",
+        "meta": "Время: 15:23",
         "story": "Мы заглядываем внутрь легендарной китайской школы **Joe Shoong Chinese School**, открывшей свои двери в 1929 году на средства филантропа Джо Шунга (*Joe Shoong*, Чжоу Сун) — уроженца провинции Гуандун и основателя знаменитой сети универмагов *National Dollar Stores*, который пожертвовал на строительство здания огромные по тем временам 5 000 долларов. Внутри учебного класса время словно застыло: ровными рядами стоят старинные деревянные парты на ажурных чугунных станинах с отверстиями и синими пузырьками для чернил, под высоким потолком покачиваются алые бумажные фонарики, а со стены над школьной доской и старым пианино на учеников смотрит портрет доктора Сунь Ятсена — основателя Китайской Республики, чьи идеи горячо поддерживали жители Локка. Более полувека у детей посёлка был особый распорядок дня: с утра они ездили в обычную американскую школу в соседнем городке Кортленд, а с четырёх до семи вечера возвращались сюда за эти парты, чтобы учить кантонский диалект, китайскую каллиграфию, историю и философию предков."
       },
       {
         "media": "./Photos_web/20260531_152356.mp4",
         "is_video": true,
         "title": "Joe Shoong Chinese School — Панорамные хроники общины и наследие Локка",
+        "meta": "Время: 15:23",
         "story": "Проходя от кружевных оконных занавесок вдоль стен школьного зала, мы вглядываемся в редкие панорамные фотографии 1920–1930-х годов: на них запечатлена вся китайская община Локка и дельты — сотни людей в строгих костюмах и белоснежной форме школьного оркестра с барабанами, вышедшие на торжественные собрания у здания школы и отделения Гоминьдана. В этих выцветших снимках — удивительная стойкость маленького поселения, которое почти девяносто лет жило на птичьих правах: вплоть до начала XXI века жители Локка владели лишь деревянными стенами своих домов, но не самой землёй под ними. Лишь в 2002–2004 годах при участии властей округа Сакраменто земля под историческим центром (получившим статус Национального исторического памятника США в 1990 году) была наконец выкуплена и разделена на участки, чтобы потомки первопроходцев впервые в истории смогли стать полноправными хозяевами своего уникального города."
       }
     ]
@@ -994,132 +689,154 @@
         "media": "./Photos_web/20260601_092056.jpg",
         "is_video": false,
         "title": "Calaveras Big Trees State Park — North Grove Trail (Discovery Stump) (Высота: 1408 м)",
+        "meta": "Время: 09:20 • Samsung Galaxy S25+ / 25mm (1x Основа)",
         "story": "Ранний выезд из Сакраменто полностью себя оправдывает: в прохладной утренней тишине на высоте 1400 метров мы выходим на тропу Северной рощи и сразу замираем перед исполинским пнём Discovery Stump. Его выглаженная временем красноватая древесина, глубокие радиальные трещины и сотни тесных годовых колец больше напоминают сцену лесного амфитеатра, чем спил дерева. Трудно представить, что в 1852 году, едва охотник Огастус Дауд случайно наткнулся на это чудо природы, пятеро лесорубов потратили 22 дня, чтобы повалить абсолютно здорового титана ради ярмарочной сенсации — и именно эта утрата в итоге пробудила совесть людей, положив начало сохранению древних рощ Калифорнии."
       },
       {
         "media": "./Photos_web/20260601_093917.mp4",
         "is_video": true,
         "title": "Павший исполин — история знаменитого Pioneer Cabin Tree",
+        "meta": "Время: 09:39",
         "story": "У отметки №21 на тропе North Grove мы останавливаемся перед стендом *«A Fallen Giant»* и колоссальным расщеплённым стволом легендарного **Pioneer Cabin Tree** — одного из самых знаменитых деревьев-туннелей в истории Америки. В 1880-х годах владельцы рощи по примеру Йосемити расширили естественную огневую пещеру у основания тысячелетней секвойи диаметром 10 метров, прорубив сквозной проезд: сначала сквозь живое дерево проезжали конные дилижансы, с 1920-х годов — автомобили, а позже через этот портал десятилетиями проходили пешие путешественники. Интерес этого места — в хрупкости даже самых вечных титанов: у гигантских секвой нет глубокого стержневого корня, их удерживает лишь широкая поверхностная сеть корней на глубине около полутора метров, и 8 января 2017 года, во время мощнейшего зимнего шторма и наводнения, ослабленный старым пропилом великан рухнул на землю. Сегодня его могучий ствол оставили нетронутым: в экосистеме рощи павшая секвойя продолжает жить в новом качестве, веками возвращая почве питательные вещества и служа домом для десятков лесных обитателей."
       },
       {
         "media": "./Photos_web/20260601_095046.mp4",
         "is_video": true,
         "title": "Под кронами тысячелетних стражей North Grove",
+        "meta": "Время: 09:50",
         "story": "Мы подходим вплотную к основанию живой секвойи с массивным наростом-капом (*burl*), которым дерево веками запечатывало давнюю рану, и медленно запрокидываем камеру вдоль уходящего в небо красно-коричневого ствола. В этом ракурсе снизу вверх раскрывается главный феномен *Sequoiadendron giganteum*: в отличие от прибрежных красных секвой (*Coast Redwoods*), которые берут рекордной высотой, гигантские секвойи западного склона Сьерра-Невады — абсолютные чемпионы планеты по объёму и массе древесины. Взрослое дерево весит больше тысячи тонн и почти не сужается до самых верхних ветвей, а его мягкая волокнистая кора толщиной до 60 сантиметров совершенно не содержит горючей смолы и насыщена дубильными танинами, что делает этих лесных титанов практически неуязвимыми ни для грибка, ни для жуков-короедов, ни для низовых пожаров."
       },
       {
         "media": "./Photos_web/20260601_122829.jpg",
         "is_video": false,
         "title": "Calaveras Big Trees State Park — North Grove Trail (Высота: 1399 м)",
+        "meta": "Время: 09:53 • Samsung SM-S908U1 / 23mm (1x Основа — общий план)",
         "story": "Идя дальше по мягкой пологой ложбине North Grove, мы то и дело запрокидываем головы: корично-рыжие колонны стволов уходят ввысь так стремительно, что утренний лес начинает казаться гигантским готическим собором. Косые солнечные лучи пробивают густой полог пихт и сосен, заставляя тёплую бархатистую кору секвой буквально светиться изнутри, пока мы неспешно переходим от одного тысячелетнего великана к другому."
       },
       {
         "media": "./Photos_web/20260601_101752.jpg",
         "is_video": false,
         "title": "Calaveras Big Trees State Park — Крона секвойи в контровом свете (Высота: 1399 м)",
+        "meta": "Время: 09:53 • Samsung SM-S908U1 / 69mm (3x Телевик — крупная деталь)",
         "story": "Не сходя с места, мы приближаем самую макушку дерева на высоте двадцатиэтажного дома — там, где солнце вспыхивает ослепительной звездой в переплетении кряжистых верхних ветвей и густой чешуйчатой хвои. Вглядываясь в эту тонкую световую графику под самым небом, мы невольно думаем о том, сколько штормов и столетий пронеслось над этими кронами задолго до 1931 года, когда роща наконец обрела защиту государственного парка."
       },
       {
         "media": "./Photos_web/20260601_100032.mp4",
         "is_video": true,
         "title": "Тропа North Grove среди гигантов",
+        "meta": "Время: 10:00",
         "story": "Мы останавливаемся у подножия секвойи с глубокой обугленной сердцевиной и медленно ведём взгляд вверх по живому красному стволу, пока его вершина не растворяется в пронзительно-синем небе Сьерра-Невады."
       },
       {
         "media": "./Photos_web/20260601_101217.mp4",
         "is_video": true,
         "title": "Сросшиеся гиганты и огненные гроты Северной рощи",
+        "meta": "Время: 10:12",
         "story": "Мы задерживаемся у подножия колоссальной секвойи, чей расклешённый комель с чёрным сводом древнего пожара соседствует с тесным каньоном между двумя сросшимися стволами, куда можно буквально шагнуть, как в скальное ущелье. Удивительный факт этого места в том, что для гигантских секвой огонь — не враг, а главный союзник: без низовых лесных пожаров роща просто не смогла бы давать потомство. Жар пламени расчищает подлесок от тенелюбивых пихт, превращает опавшую хвою в плодородную золу для крошечных семян и, самое главное, подсушивает и раскрывает тугие зелёные шишки высоко в кронах, которые до этого момента могут висеть закрытыми до двадцати лет."
       },
       {
         "media": "./Photos_web/20260601_103207.jpg",
         "is_video": false,
         "title": "Calaveras Big Trees State Park — Секвойи-близнецы North Grove (Высота: 1399 м)",
+        "meta": "Время: 10:17 • Samsung SM-S908U1 / 13mm (0.6x Ультраширик)",
         "story": "Перед парой сросшихся у подножия секвой-близнецов обычного взгляда уже не хватает — мы отступаем к краю тропы, чтобы охватить их целиком от мощных расклешённых корней с чёрными отметинами давних низовых пожаров до смыкающихся в синеве верхушек. Под ногами глухо пружинит толстый золотистый ковёр из опавшей хвои, воздух пахнет сухой смолой и нагретым деревом, а вокруг стоит та самая звенящая утренняя безлюдность, ради которой стоило проснуться на рассвете."
       },
       {
         "media": "./Photos_web/20260601_101849.mp4",
         "is_video": true,
         "title": "Деревянный настил Boardwalk и скульптура древних корней",
+        "meta": "Время: 10:18",
         "story": "Наши шаги гулко отдаются по приподнятому деревянному настилу (*boardwalk*), который плавно огибает основание исполинского ствола и выводит нас к фантастическому переплетению вывороченных корней павшего дерева, похожему на застывшую в дереве скульптуру. Этот деревянный помост проложен здесь не только для удобства прогулки: поскольку вся корневая система тысячелетней секвойи залегает в самом верхнем слое почвы и расходится в стороны почти на полгектара, даже шаги тысяч туристов со временем уплотняют землю и перекрывают корням доступ к воде и кислороду — поэтому настил бережно хранит дыхание древней рощи."
       },
       {
         "media": "./Photos_web/20260601_102743.mp4",
         "is_video": true,
         "title": "Возвращение к Big Stump и поверженному стволу Mammoth Tree",
+        "meta": "Время: 10:27",
         "story": "Завершая кольцо по Северной роще, мы выходим к огромному горизонтальному спилу поваленного ствола **Mammoth Tree** и широкой деревянной сцене пня **Big Stump**. Именно с этого места в 1852 году началась туристическая история всей Калифорнии — задолго до того, как мир узнал о долине Йосемити! Когда в июне 1853 года предприниматель капитан Уильям Ханфорд за 22 дня повалил это 90-метровое дерево возрастом более 1240 лет при помощи длинных буров и клиньев, из его коры собрали выставочный макет для показа в Сан-Франциско, Нью-Йорке и Лондоне (где публика поначалу сочла экспонат «калифорнийской мистификацией»). А здесь, в роще, на гигантском пне диаметром более 7,5 метров в XIX веке устраивали балы на 32 танцующие пары, ставили временный павильон и даже печатали первую местную газету *«Big Tree Bulletin»*, а вдоль самого поваленного ствола оборудовали двухдорожечный кегельбан и бар."
       },
       {
         "media": "./Photos_web/20260601_103145.mp4",
         "is_video": true,
         "title": "Подъём на историческую сцену Discovery Stump",
+        "meta": "Время: 10:31",
         "story": "Проходя мимо глубоко изрезанной коры соседней живой секвойи, мы поднимаемся по деревянным ступеням прямо на плоскую вершину пня **Discovery Stump**. Только оказавшись наверху, по-настоящему ощущаешь невероятный масштаб этого дерева: в 1853 году ствол тринадцативекового титана был настолько мощным, что даже полностью перерубленный у основания, он ещё два дня отказывался падать, удерживая равновесие под собственным гигантским весом, пока лесорубы не вбили в пропил огромные клинья во время порыва ветра."
       },
       {
         "media": "./Photos_web/20260601_103216.mp4",
         "is_video": true,
         "title": "На вершине Big Stump и рождение природоохранного движения",
+        "meta": "Время: 10:32",
         "story": "Мы делаем несколько шагов по выглаженной поколениями путешественников поверхности **Big Stump**, а затем спускаемся обратно к стенду у начала тропы. В этом месте сходится вся драма и триумф американской охраны природы: варварская рубка *Discovery Tree* ради ярмарочной наживы вызвала в 1850-х годах такую бурю негодования в прессе и среди писателей (включая Джона Мьюра и Марка Твена), что именно трагедия этого дерева впервые заставила общество задуматься о неприкосновенности диких лесов — что в итоге привело к спасению рощ Марипоса и Секвойя, а в 1931 году подарило статус государственного парка и самому лесу Калаверас."
       },
       {
         "media": "./Photos_web/20260601_103532.jpg",
         "is_video": false,
         "title": "Calaveras Big Trees State Park — Финиш петли North Grove (Высота: 1388 м)",
+        "meta": "Время: 10:35 • Samsung Galaxy S25+ / 23mm (1x Основа)",
         "story": "У самого выхода с петли North Grove лес преподносит нам забавный урок ботаники: прямо на земле лежит увесистая, залитая смолой шишка длиной чуть ли не в полруки, а рядом — трогательная табличка рейнджеров с нарисованными белкой и дятлом, просящая оставить лесной урожай его законным обитателям. Самое удивительное открытие ждёт нас тут же: оказывается, у самих исполинских секвой шишки совсем крошечные, размером с куриное яйцо, а эти полуметровые гиганты роняет их соседка по склону — величественная сахарная сосна Ламберта."
       },
       {
         "media": "./Photos_web/20260601_112305.jpg",
         "is_video": false,
         "title": "Каньон реки North Fork Stanislaus River (Переезд в South Grove) (Высота: 1302 м)",
+        "meta": "Время: 11:23 • Samsung SM-S908U1 / 13mm (0.6x Ультраширик — панорама каньона)",
         "story": "Простившись с уютной Северной рощей, мы сворачиваем вглубь парка по лесному серпантину и ныряем на дно дикого гранитного ущелья реки Норт-Форк-Станислаус. Остановившись на мосту, мы любуемся тем, как кипящий талый поток прорезает отполированные до белизны каменные плиты в плотном кольце нетронутой тайги. Трудно поверить, что ещё в середине прошлого века над этим ущельем и всей Южной рощей висела угроза тотальной вырубки — защитникам природы потребовалось 23 года борьбы, чтобы 16 апреля 1954 года наконец выкупить эти земли у лесопромышленников."
       },
       {
         "media": "./Photos_web/20260601_112314.mp4",
         "is_video": true,
         "title": "Пороги North Fork Stanislaus River",
+        "meta": "Время: 11:23",
         "story": "С моста мы заворожённо слушаем гул весеннего половодья: ледяная вода с заснеженных вершин Сьерры с рёвом проносится по золотистым гранитным ступеням, наполняя каньон свежестью и водяной пылью."
       },
       {
         "media": "./Photos_web/20260601_112335.jpg",
         "is_video": false,
         "title": "Русло North Fork Stanislaus River / Beaver Creek (Высота: 1302 м)",
+        "meta": "Время: 11:23 • Samsung SM-S908U1 / 23mm (1x Основа — текстура воды)",
         "story": "Перегнувшись через перила, мы всматриваемся прямо в прозрачную глубину потока у слияния с ручьём Бивер-Крик: сквозь изумрудно-янтарную воду, подсвеченную почти отвесным солнцем, отчётливо видна каждая гладкая галька и каждый затопленный гранитный уступ. От реки веет такой бодрящей прохладой, что усталость как рукой снимает — идеальная перезагрузка перед нашим главным восьмикилометровым переходом в дикую чащу South Grove."
       },
       {
         "media": "./Photos_web/20260601_121007.jpg",
         "is_video": false,
         "title": "Calaveras Big Trees State Park — South Grove Trail (Западная азалия) (Высота: 1372 м)",
+        "meta": "Время: 12:10 • Samsung SM-S908U1 / 69mm (3x Телевик — крупный план)",
         "story": "На подъёме вдоль шумного ручья Бивер-Крик среди суровых многовековых стволов вдруг вспыхивает нежная июньская деталь — в зелёном полумраке подлеска светятся белоснежные с розовым румянцем цветы дикой западной азалии. Мы притормаживаем на тропе, вдыхая их тонкий сладковатый аромат: здесь, вдали от дорог и суеты, первозданный лес живёт в удивительном согласии между хрупким весенним цветением и вечностью тысячелетних гигантов."
       },
       {
         "media": "./Photos_web/20260601_121629.jpg",
         "is_video": false,
         "title": "Calaveras Big Trees State Park — South Grove (Выгоревший грот секвойи) (Высота: 1463 м)",
+        "meta": "Время: 12:16 • Samsung SM-S908U1 / 23mm (1x Основа)",
         "story": "Стоит шагнуть внутрь выгоревшего грота у основания живой секвойи, как привычное чувство масштаба мгновенно исчезает — человек под этим угольно-чёрным сводом кажется совсем крошечным. А ведь вокруг нас в Южной роще скрывается около тысячи таких исполинов! Природа наделила их уникальной бронёй: насыщенная танинами волокнистая кора толщиной до полуметра не вспыхивает даже в сильный лесной пожар, веками залечивая огненные раны и превращая их в фантастические пещеры, над которыми как ни в чём не бывало зеленеет живая крона."
       },
       {
         "media": "./Photos_web/20260601_122733.mp4",
         "is_video": true,
         "title": "Древний портал South Grove Trail",
+        "meta": "Время: 12:27",
         "story": "Мы в полном безмолвии проходим сквозь узкую, рассечённую древними молниями и пожарами арку прямо в теле гигантского дерева, выходя из сумрака обугленной сердцевины навстречу яркому полуденному солнцу."
       },
       {
         "media": "./Photos_web/20260601_122820.jpg",
         "is_video": false,
         "title": "Calaveras Big Trees State Park — Расселина гиганта на South Grove Trail (Высота: 1473 м)",
+        "meta": "Время: 12:28 • Samsung SM-S908U1 / 23mm (1x Основа)",
         "story": "В самой дальней и глухой точке маршрута, где давно пропала мобильная связь и слышен только стук наших треккинговых палок по упругой хвое, тропа выводит к дереву со сквозным вертикальным порталом. Мы присаживаемся перевести дух прямо перед этим живым коридором, ощущая полное уединение дикой рощи, в глубине которой прячется её негласный монарх — колоссальное дерево Луи Агассиса с основанием шире семи с половиной метров."
       },
       {
         "media": "./Photos_web/20260601_124955.jpg",
         "is_video": false,
         "title": "Calaveras Big Trees State Park — Кафедральный свод South Grove (Высота: 1445 м)",
+        "meta": "Время: 12:49 • Samsung SM-S908U1 / 13mm (0.6x Ультраширик)",
         "story": "Подойдя вплотную к корням очередного великана, мы заглядываем снизу вверх в его гигантскую обугленную расщелину: чёрный рельефный свод обрамляет молодая изумрудная листва, а где-то на головокружительной высоте просвечивает чистая лазурь неба. Этот невероятный контраст фактур — бархатной терракотовой коры, древнего угля и кипящей жизни — лучше любых слов объясняет, почему ради спасения нетронутой Южной рощи стоило бороться больше двадцати лет."
       },
       {
         "media": "./Photos_web/20260601_151450.jpg",
         "is_video": false,
         "title": "Murphys Historic Downtown — Дегустационный зал Tanner Vineyards (Main Street) (Высота: 672 м)",
+        "meta": "Время: 15:14 • Samsung Galaxy S25+ / 23mm (1x Основа)",
         "story": "После восьми километров по лесным тропам спуск в тёплую долину кажется особенно сладким: на тенистой главной улице старинного Мерфиса мы ныряем в прохладу дегустационного зала Tanner Vineyards. Пока в бокалах играет местное вино из предгорий Сьерры, а на медную стойку встаёт заветный пакет с бутылкой в коллекцию, сквозь окно проглядывает массивная каменная кладка времён золотой лихорадки — город, основанный братьями Мёрфи ещё в 1848 году, давно сменил кирки старателей на уютные винодельни, сохранив всё своё историческое обаяние."
       }
     ]
@@ -1133,150 +850,175 @@
         "media": "./Photos_web/20260602_082151.jpg",
         "is_video": false,
         "title": "Pinecrest Lake — Утренняя панорама горного озера",
+        "meta": "Камера: 0.6x ширик (13mm) • Высота: 1694 м • Время: 08:21",
         "story": "Первая остановка на западном склоне Сьерра-Невады по трассе CA‑108. В восемь утра воздух над водохранилищем Пайнкрест на высоте почти 1700 метров абсолютно прозрачен: хвойный амфитеатр Национального леса Станислаус отражается в тёмно-синей воде, а первые рыбацкие лодки расчерчивают зеркальную гладь длинными серебристыми следами."
       },
       {
         "media": "./Photos_web/20260602_081935.jpg",
         "is_video": false,
         "title": "Pinecrest Lake — Гранитный берег и старая сосна",
+        "meta": "Камера: 1x основа (23mm) • Высота: 1694 м • Время: 08:19",
         "story": "Прогулка вдоль кромки воды даёт отличную разминку перед штурмом перевала. Выбеленный солнцем и зимними штормами ствол старой сосны на гранитном берегу работает как естественная рама для утренней глади озера и далёких лесистых гребней."
       },
       {
         "media": "./Photos_web/20260602_081601.jpg",
         "is_video": false,
         "title": "Pinecrest Lake — Лодки и утренняя тишина",
+        "meta": "Камера: 0.6x ширик (13mm) • Высота: 1694 м • Время: 08:16",
         "story": "Утреннее небо и хвойный лес отражаются в кобальтовой воде озера. Лодки и понтоны дополняют пейзаж, наполненный тишиной и спокойствием."
       },
       {
         "media": "./Photos_web/20260602_082002.mp4",
         "is_video": true,
         "title": "Pinecrest Lake — Утренний штиль в горах",
+        "meta": "Время: 08:20",
         "story": "Неспешное скольжение утренних лодок по зеркальной глади горного озера в окружении вековых сосен перед началом крутого подъёма на перевал Сонора."
       },
       {
         "media": "./Photos_web/20260602_082317(0).jpg",
         "is_video": false,
         "title": "Pinecrest Lake — Адмиральский смотр озёрной флотилии",
+        "meta": "Камера: 1x основа (23mm) • Высота: 1694 м • Время: 08:23",
         "story": "В половине девятого утра жизнь на высоте 1700 метров удалась окончательно: пока где-то впереди нас ждёт суровый перевал Сонора с уклонами в 26%, здесь можно инспектировать водную гладь и делать вид, что этот частный курорт в лесах Сьерра-Невады открыли специально к нашему приезду."
       },
       {
         "media": "./Photos_web/20260602_093559.jpg",
         "is_video": false,
         "title": "Donnell Vista Point — Гранитные купола каньона Станислаус",
+        "meta": "Камера: 1x основа (23mm) • Высота: 1950 м • Время: 09:35",
         "story": "Короткая видовая тропа у края обрыва открывает масштаб ледникового ущелья Middle Fork Stanislaus River. Монолитные гранитные бастионы и базальтовые гребни Dardanelles здесь почти не уступают по драматизму Йосемити, но встречают полной тишиной без туристических толп."
       },
       {
         "media": "./Photos_web/20260602_092906.jpg",
         "is_video": false,
         "title": "Donnell Vista Point — Каньон и водохранилище Доннелл",
+        "meta": "Камера: 1x основа (23mm) • Высота: 1950 м • Время: 09:29",
         "story": "Головокружительный взгляд вниз с высоты птичьего полёта: глубоко на дне гранитного ущелья синеет чаша водохранилища Donnell Lake, образованного арочной плотиной 1958 года на реке Мидл-Форк-Станислаус."
       },
       {
         "media": "./Photos_web/20260602_093320.mp4",
         "is_video": true,
         "title": "Donnell Vista — Над пропастью реки Станислаус",
+        "meta": "Время: 09:33",
         "story": "Ветер качает ветви горных сосен на самом краю скального обрыва, открывая отвесную панораму гранитного каньона и бирюзового водохранилища далеко внизу."
       },
       {
         "media": "./Photos_web/20260602_113248.jpg",
         "is_video": false,
         "title": "Sonora Pass Summit — На высоте 2933 метра",
+        "meta": "Камера: 0.6x ширик (13mm) • Высота: 2933 м • Время: 11:16",
         "story": "Высшая точка маршрута через Сьерра-Неваду — перевал Сонора (9 624 фута), второй по высоте автомобильный перевал Калифорнии после Tioga Pass. Прямо через седловину проходит легендарный тихоокеанский маршрут Pacific Crest Trail (PCT), а на северных склонах даже в начале июня лежат плотные снежники."
       },
       {
         "media": "./Photos_web/20260602_124421.jpg",
         "is_video": false,
         "title": "Eastern Sierra — Спуск с перевала Сонора",
+        "meta": "Камера: 1x основа (23mm) • Высота: 2650 м • Время: 11:32",
         "story": "Восточный склон Сьерра-Невады обрывается в высокогорную пустыню крутым серпантином. Лента шоссе CA‑108 стремительно уходит вниз сквозь субальпийский пояс к долине Бриджпорт и трассе US‑395."
       },
       {
         "media": "./Photos_web/20260602_114624.jpg",
         "is_video": false,
         "title": "Eastern Sierra — Снежные пики и весенние осины",
+        "meta": "Камера: 3x портрет (69mm) • Высота: 2200 м • Время: 11:46",
         "story": "3-кратный телеобъектив сжимает перспективу у подножия восточного сброса Сьерры: ярко-зелёная молодая листва рощи трясущихся осин (Quaking Aspen) контрастирует с суровыми заснеженными бастионами хребта."
       },
       {
         "media": "./Photos_web/20260602_124426.mp4",
         "is_video": true,
         "title": "Conway Summit Overlook — Панорама котловины Моно",
+        "meta": "Время: 12:44",
         "story": "Захватывающий вид с обзорной площадки Конвей-Саммит (2481 м) на шоссе US‑395: внизу во всю ширь разворачивается бессточная вулканическая котловина Mono Basin и бирюзовое зеркало древнего озера Моно."
       },
       {
         "media": "./Photos_web/20260602_142358.mp4",
         "is_video": true,
         "title": "Gull Lake Marina — Понтоны под Карсон-Пик и тенистый прудик с утками",
+        "meta": "Высота: 2297 м • Время: 14:23",
         "story": "От причала с белоснежными понтонными катерами, над которыми во весь горизонт возвышается заснеженная гранитная стена Карсон-Пик (3325 м), мы сворачиваем в уютный тенистый уголок марины под раскидистой сосной. Здесь у журчащего декоративного прудика с форелью разложены сосновые поленья, стоит резная скамья из цельной коряги, по стволу дерева карабкается деревянный медвежонок, а на перилах рядом с американскими флагами пристроились кованые утки-качели."
       },
       {
         "media": "./Photos_web/20260602_142631.mp4",
         "is_video": true,
         "title": "Gull Lake Marina — Корневая мебель над водой и медведь-охранник",
+        "meta": "Высота: 2297 м • Время: 14:26",
         "story": "Прогулка по дощатой террасе старейшей марины озера Галл-Лейк (1917 г.) под гирляндами лампочек с видом на заснеженный бастион Карсон-Пик (3325 м) и ряды серебристых рыбацких лодок за каменным волнорезом. На солнечной палубе у самой воды стоят фактурные кресла и стол, вырезанные из цельных древесных корней и коряг, а у стены причала под резной форелью дежурит колоритный деревянный медведь в шляпе и с ружьём наперевес — суровый, но обаятельный хранитель «Калифорнийской Швейцарии»."
       },
       {
         "media": "./Photos_web/20260602_142705.jpg",
         "is_video": false,
         "title": "June Lake Loop — Причал Gull Lake Marina",
+        "meta": "Камера: 0.6x ширик (13mm) • Высота: 2297 м • Время: 14:27",
         "story": "Историческая марина озера Галл-Лейк (основана в 1917 году) в самом сердце петли June Lake Loop. На высоте почти 2300 метров под фактурными кучевыми облаками выстроились лодки у причала, деревянные скамьи с колёсами дилижансов и заснеженные пики массива Карсон-Пик."
       },
       {
         "media": "./Photos_web/20260602_142158.jpg",
         "is_video": false,
         "title": "Gull Lake — Форелевая столица Восточной Сьерры",
+        "meta": "Камера: 1x основа (23mm) • Высота: 2286 м • Время: 14:21",
         "story": "Кованая скульптура выпрыгивающей из волн форели на берегу Gull Lake символизирует характер всей долины: ледниковые озёра вокруг ручья Reversed Creek со времён золотой лихорадки славятся кристально чистой холодной водой и трофейной радужной форелью."
       },
       {
         "media": "./Photos_web/20260602_141856.jpg",
         "is_video": false,
         "title": "June Lake Loop — Шишки сосны Джеффри на ветвях",
+        "meta": "Камера: 3x портрет (69mm) • Высота: 2286 м • Время: 14:18",
         "story": "3-кратный зум фокусируется на ботанической детали берегового леса — плотной грозди из четырёх смолистых шишек сосны Джеффри (*Pinus jeffreyi*), созревающих среди длинных пучков хвои."
       },
       {
         "media": "./Photos_web/20260602_144723.jpg",
         "is_video": false,
         "title": "Gull Lake & June Lake — Альпийские шале «Калифорнийской Швейцарии»",
+        "meta": "Камера: 1x основа (23mm) • Высота: 2297 м • Время: 14:47",
         "story": "Прогуливаясь по гранитному берегу вдоль залитой солнцем сапфировой глади озера Галл-Лейк, мы ловим себя на мысли, что декорации за один час сменились до неузнаваемости — словно после сурового перевала Сонора мы ненароком свернули в тихий швейцарский кантон. На противоположном холме, среди серебристо-зелёного ковра горной полыни и пушистых сосен Джеффри, уютно расположились деревянные альпийские шале с острыми крышами и панорамными окнами. По зеркальной воде неспешно скользят понтонный катер и маленькие рыбацкие лодки, а тёплый послеполуденный бриз приносит с гор запах нагретой хвои и полную безмятежность."
       },
       {
         "media": "./Photos_web/20260602_142139.mp4",
         "is_video": true,
         "title": "Gull Lake — Горный бриз и снежные вершины",
+        "meta": "Время: 14:21",
         "story": "Живая рябь на сапфировой воде озера Галл-Лейк, лёгкий шум сосен и панорама заснеженного гребня Сьерра-Невады у скульптуры форели."
       },
       {
         "media": "./Photos_web/20260602_145628.jpg",
         "is_video": false,
         "title": "June Lake Loop — Крупная шишка сосны Джеффри",
+        "meta": "Камера: 1x основа (23mm) • Высота: ~2290 м • Время: 14:56",
         "story": "Крупная шишка сосны Джеффри (*Pinus jeffreyi*) с рельефными чешуйками тёплого янтарно-коричневого оттенка. В прогретом послеполуденном воздухе Восточной Сьерры кора этих сосен источает тонкий аромат ванили и ирисок."
       },
       {
         "media": "./Photos_web/20260602_195131.jpg",
         "is_video": false,
         "title": "Mono Lake South Tufa Reserve — Инопланетный берег на закате",
+        "meta": "Камера: 0.6x ширик (13mm) • Высота: 1923 м • Время: 19:52",
         "story": "Кульминация третьего дня у южного берега древнего бессточного озера Моно, возраст которого превышает 760 000 лет. Причудливые известковые башни туфа сформировались под водой, где пресные кальциевые ключи били сквозь насыщенную карбонатами щелочную воду, и обнажились после падения уровня озера в XX веке."
       },
       {
         "media": "./Photos_web/20260602_194130.jpg",
         "is_video": false,
         "title": "Mono Lake — Замок из известкового туфа в золотой час",
+        "meta": "Камера: 3x портрет (69mm) • Высота: 1923 м • Время: 19:51",
         "story": "Переход на 3-кратный телеобъектив превращает отдельную туфовую башню в силуэт готического замка, окружённого расплавленным золотом закатной ряби и подсвеченными снизу вечерними облаками."
       },
       {
         "media": "./Photos_web/20260602_194755.jpg",
         "is_video": false,
         "title": "South Tufa Reserve — Вечерний портрет у озера Моно",
+        "meta": "Камера: 1x основа (25mm) • Высота: 1923 м • Время: 19:54",
         "story": "Памятный кадр в мягких пастельных сумерках среди белых карбонатных шпилей South Tufa, когда ветер стихает, а небо над Восточной Сьеррой окрашивается в сиренево-розовые тона."
       },
       {
         "media": "./Photos_web/20260602_195255.jpg",
         "is_video": false,
         "title": "Mono Lake South Tufa — Бухта среди известковых бастионов",
+        "meta": "Камера: 0.6x ширик (13mm) • Высота: 1922 м • Время: 19:52",
         "story": "Сверхширокоугольный кадр из тихой песчаной бухты, зажатой между массивной пористой стеной известкового туфа справа и цепочкой «готических» башен, уходящих прямо в серебристо-золотую гладь озера Моно. Каждая такая колонна веками росла под водой на месте выхода пресных кальциевых источников, прежде чем снижение уровня воды в XX веке превратило дно озера в сюрреалистичный каменный лес."
       },
       {
         "media": "./Photos_web/20260602_195654.mp4",
         "is_video": true,
         "title": "Mono Lake South Tufa — Сумерки среди туфовых башен",
+        "meta": "Время: 19:56",
         "story": "Тихий плеск густой щелочной воды у подножия фантастических известковых колонн озера Моно под угасающим закатным небом."
       }
     ]
@@ -1290,90 +1032,105 @@
         "media": "./Photos_web/11111111111.jpg",
         "is_video": false,
         "title": "Bodie State Historic Park — Мемориал Historical Landmark No. 341",
+        "meta": "Камера: 1x основа (23mm, кроп) • Высота: 2550 м • Время: 09:10",
         "story": "Каменный монумент с двумя бронзовыми плитами у входа в Боди. Верхняя табличка (Исторический памятник Калифорнии № 341, 1964 г.) напоминает, что золото здесь открыл в 1859 году У. С. Боди, чьи шахты в итоге дали стране драгоценный металл более чем на 100 миллионов долларов, а фольклорный персонаж *«Плохой парень из Боди» (The Bad Man from Bodie)* с револьверами и ножом Боуи навсегда вошёл в легенды Дикого Запада. Нижняя плита (*Return to Bodie*, 1998 г.) установлена старинным братством горняков *E Clampus Vitus*, добившимся в 1956–1962 годах включения города-призрака в систему парков штата и Национальный реестр исторических мест США."
       },
       {
         "media": "./Photos_web/20260603_091321.mp4",
         "is_video": true,
         "title": "Bodie State Historic Park — Методистская церковь 1882 года и перекрёсток Грин-стрит",
+        "meta": "Высота: 2550 м • Время: 09:13",
         "story": "Первые шаги по северной окраине города-призрака сразу переносят нас в 1880-е годы: от покосившегося деревянного крыльца шахтёрского дома взгляд скользит через заросли серебристой горной полыни к остроконечной колокольне Методистской церкви (*Bodie Methodist Church*). Построенная в 1882 году на пожертвования жителей — включая владельцев знаменитых шестидесяти пяти салунов и квартала красных фонарей — она осталась единственным уцелевшим храмом города и чудом пережила катастрофический пожар июня 1932 года, когда двухлетний мальчик, игравший со спичками, случайно сжёг почти девяносто процентов деревянного Боди. Напротив через пыльный перекрёсток виднеется угловой особняк банкира Джеймса Кейна (*J.S. Cain House*), чья семья в XX веке выкупила опустевшие участки и наняла сторожей для защиты домов от мародёров, а со стен самой церкви в начале 1930-х бесследно исчезло огромное полотно с Десятью заповедями — говорят, именно с той кражи и началась знаменитая легенда о «проклятии Боди», преследующем каждого, кто осмелится увезти отсюда хотя бы ржавый гвоздь."
       },
       {
         "media": "./Photos_web/20260603_091950.mp4",
         "is_video": true,
         "title": "Bodie — Дом семейства Миллер (1878) и накрытый стол для призраков",
+        "meta": "Высота: 2550 м • Время: 09:19",
         "story": "Переступив порог дома плотника и возчика Тома Миллера (*Tom Miller House*, 1878 г.) на Грин-стрит, физически ощущаешь мурашки по коже: половицы глухо стонут под шагами, со стен свисают лохмотья выцветших викторианских обоев, а у окна застыла железная кровать с обнажёнными пружинами и пустое деревянное кресло-качалка. В соседней столовой полоса резкого утреннего света падает на белые стулья под архивной панорамой с философской надписью *«Nothing Endures But Change»* («Ничто не вечно, кроме перемен»), но самое мистическое зрелище ждёт за железной загородкой мятно-зелёной кухни. Там на круглом столе под вековым слоем пыли до сих пор расставлены фаянсовые миски, тарелки, скалка и жестяные банки в распахнутом буфете — словно хозяева вышли из-за завтрака на одну минуту и растворились в воздухе. Ночные рейнджеры Боди уверяют, что именно в этих домах на Грин-стрит по ночам само собой раскачивается кресло у окна, а в ледяных комнатах порой отчётливо веет тёплым запахом свежеиспечённого хлеба."
       },
       {
         "media": "./Photos_web/20260603_092834.jpg",
         "is_video": false,
         "title": "Bodie — Аптекарские склянки за старым стеклом",
+        "meta": "Камера: 1x основа (23mm) • Высота: 2550 м • Время: 09:28",
         "story": "Если заглянуть сквозь волнистое старинное стекло одного из домов, на покрытых вековой пылью полках видны ряды оригинальных стеклянных бутылок и банок, оставленных жителями в тот день, когда они навсегда покинули город."
       },
       {
         "media": "./Photos_web/20260603_092841.mp4",
         "is_video": true,
         "title": "Bodie State Historic Park — Взгляд сквозь окна прошлого",
+        "meta": "Время: 09:28",
         "story": "Камера скользит вдоль рассохшихся деревянных рам, открывая нетронутый интерьер заброшенной лавки с десятками пыльных склянок и предметов быта эпохи золотой лихорадки."
       },
       {
         "media": "./Photos_web/20260603_093319.mp4",
         "is_video": true,
         "title": "Bodie — Лавка Харви Буна (1879), эликсиры XIX века и бензоколонка призраков",
+        "meta": "Высота: 2550 м • Время: 09:33",
         "story": "У крыльца главного универсального магазина Боди (*Boone Store & Warehouse*, открытого в 1879 году Харви Буном — дальним родственником легендарного первопроходца Дэниела Буна) время словно застряло между двумя веками сразу. Под выгоревшей жестяной вывеской сигарет *Old Gold* мы прижимаемся к витринному стеклу, в котором призрачно отражаются облака и холмы, а из полумрака торгового зала проступают дубовые бочки, чугунная кофемолка с двумя маховиками, деревянные ящики из-под динамита *Giant Powder Co.* из Сан-Франциско и разбитая стеклянная витрина с пожелтевшими коробочками касторового масла *Kellogg's Tasteless Castor Oil* и аптекарскими снадобьями времён Дикого Запада. Стоит перевести камеру от пыльных прилавков вдоль дощатого тротуара Мейн-стрит — и прямо перед магазином вырастают две ржавые бензоколонки *Shell* со стеклянными мерными колбами 1920-х годов и застывший рядом грузовик *Dodge Graham* 1927 года, готовый в любую секунду завести мотор и отправиться к заброшенным золотым штольням."
       },
       {
         "media": "./Photos_web/20260603_093547.png",
         "is_video": false,
         "title": "Bodie State Historic Park — Грузовик Dodge Graham 1927 года (Крупный план)",
+        "meta": "Камера: 1x основа (23mm) • Высота: 2550 м • Время: 09:35",
         "story": "Фронтальный взгляд на знаменитый ярко-синий грузовик *Dodge Graham* 1927 года выпуска. Линейка коммерческих грузовиков Graham Brothers с двигателями Dodge в 1920-х годах была главной рабочей лошадкой горнорудных посёлков Запада."
       },
       {
         "media": "./Photos_web/20260603_095322.png",
         "is_video": false,
         "title": "Bodie State Historic Park — Панорама долины города-призрака",
+        "meta": "Камера: 0.6x ширик (13mm) • Высота: 2550 м • Время: 09:54",
         "story": "Утренний взгляд на высокогорную долину Боди на отметке 2 550 метров. Золото здесь впервые нашёл У. С. Боди в 1859 году, а настоящий бум вспыхнул в 1875-м, когда обвал на шахте неожиданно вскрыл богатейшую золотоносную жилу. Сегодня среди полынных холмов сохранилось более сотни подлинных деревянных построек конца XIX века."
       },
       {
         "media": "./Photos_web/20260603_095533.jpg",
         "is_video": false,
         "title": "Bodie — Улицы «остановленного времени»",
+        "meta": "Камера: 1x основа (23mm) • Высота: 2550 м • Время: 09:55",
         "story": "Прогулка вдоль выцветших от солнца и морозных ветров сосновых фасадов Боди. С 1962 года парк поддерживается по принципу *arrested decay* («консервация увядания»): рейнджеры укрепляют крыши и фундаменты, но ничего не перекрашивают и не достраивают заново."
       },
       {
         "media": "./Photos_web/20260603_180520.jpg",
         "is_video": false,
         "title": "Lake Tahoe — Берег Chimney Beach",
+        "meta": "Камера: 1x основа (23mm) • Высота: 1900 м • Время: 18:05",
         "story": "Выход к восточному невадскому берегу озера Тахо после спуска по лесной тропе. Бухта Чимни-Бич, получившая своё название от одинокой каменной печной трубы старой хижины смотрителя, встречает золотистым гранитным песком и мягким вечерним прибоем."
       },
       {
         "media": "./Photos_web/20260604_132445.jpg",
         "is_video": false,
         "title": "East Shore Tahoe — Изумрудная вода у гранитных валунов",
+        "meta": "Камера: 3x портрет (69mm) • Высота: 1900 м • Время: 18:15",
         "story": "3-кратный телеобъектив выхватывает знаменитую аквамариновую прозрачность восточного берега Тахо: косые лучи предзакатного солнца просвечивают толщу воды до самого песчаного дна вокруг отполированных волнами серых гранитных глыб."
       },
       {
         "media": "./Photos_web/20260604_073444.jpg",
         "is_video": false,
         "title": "Lake Tahoe — Тропа над бухтами восточного берега",
+        "meta": "Камера: 1x основа (23mm) • Высота: 1900 м • Время: 18:24",
         "story": "Вид с каменистой береговой тропы по пути между Chimney Beach и уединённой бухтой Secret Cove: бескрайняя сапфировая чаша высокогорного озера Тахо уходит к снежным вершинам калифорнийского берега на горизонте."
       },
       {
         "media": "./Photos_web/20260603_181646.jpg",
         "is_video": false,
         "title": "Chimney Beach Trail — Золотой час в сосновом лесу",
+        "meta": "Камера: 1x основа (23mm) • Высота: 1900 м • Время: 18:16",
         "story": "Тёплый вечерний свет среди массивных гранитных валунов и корабельных сосен на тропе восточного берега Тахо перед возвращением к перевалу Spooner Summit."
       },
       {
         "media": "./Photos_web/20260603_180708.mp4",
         "is_video": true,
         "title": "Chimney Beach — Выход к бирюзовой воде Тахо",
+        "meta": "Время: 18:07",
         "story": "Первое появление лазурной бухты Чимни-Бич сквозь сосны на берегу и шум прозрачных волн, накатывающих на песчаную косу."
       },
       {
         "media": "./Photos_web/20260603_181444.mp4",
         "is_video": true,
         "title": "East Shore Tahoe — Игра предзакатного света на камнях",
+        "meta": "Время: 18:14",
         "story": "Кристально чистая изумрудная вода озера Тахо переливается вокруг округлых гранитных валунов в мягких лучах вечернего солнца."
       }
     ]
@@ -1387,102 +1144,119 @@
         "media": "./Photos_web/20260604_075111.jpg",
         "is_video": false,
         "title": "Emerald Bay Overlook — Утро над гранитным амфитеатром (Высота: 2060 м)",
+        "meta": "Время: 06:58 • Оптика: Ultra-Wide (0.6x) (13mm экв.)",
         "story": "Выехав из Карсон-Сити на рассвете, мы к семи утра поднимаемся по извилистому серпантину CA-89 к каменному парапету над заливом Эмеральд-Бей. Утренний воздух на высоте двух тысяч метров ещё обжигает пальцы морозной свежестью, а прямо за коваными перилами и пушистыми кронами сосен встаёт освещённый первыми лучами гранитный массив пика Таллак (2967 м), охраняющий узкую фьордообразную бухту, высеченную древними ледниками."
       },
       {
         "media": "./Photos_web/20260604_070004.mp4",
         "is_video": true,
         "title": "Рассветная тишина над заливом Эмеральд-Бей (Высота: 2060 м)",
+        "meta": "Время: 07:00",
         "story": "В этот ранний час на смотровой площадке царит звенящая горная тишина — ещё нет ни туристических автобусов, ни верениц машин, только лёгкий ветерок шевелит длинные иглы сосен Джеффри над пропастью."
       },
       {
         "media": "./Photos_web/20260604_073724.jpg",
         "is_video": false,
         "title": "D.L. Bliss State Park — Лазурный берег сквозь сосны (Высота: 1931 м)",
+        "meta": "Время: 07:37 • Оптика: Wide / Main (1x) (23mm экв.)",
         "story": "Спустившись на нижнюю парковку парка D.L. Bliss, мы выходим на берег, и первое же окно между могучими рыжеватыми стволами заставляет нас замереть на месте. Вода у подножия скал светится неправдоподобным тропическим оттенком — от прозрачного аквамарина у прибрежных валунов до густого кобальта на глубине, где видимость в солнечный день достигает двадцати с лишним метров."
       },
       {
         "media": "./Photos_web/20260604_132439.jpg",
         "is_video": false,
         "title": "Rubicon Point — Взгляд в четырёхсотметровую бездну (Высота: 1938 м)",
+        "meta": "Время: 07:50 • Оптика: Portrait / Tele (3x) (69mm экв.)",
         "story": "На мысе Рубикон-Пойнт мы осторожно заглядываем за кромку отвесной гранитной стены и переключаемся на трёхкратный зум, чтобы рассмотреть подводные скалы. Прямо под нашими кроссовками залитая солнцем изумрудная полка резко обрывается в тёмно-синюю тектоническую пропасть — именно здесь находится самый крутой подводный сброс озера Тахо, уходящий вертикально вниз более чем на 400 метров."
       },
       {
         "media": "./Photos_web/20260604_075809.jpg",
         "is_video": false,
         "title": "Rubicon Trail — Гранитный страж над утренней дымкой (Высота: 1938 м)",
+        "meta": "Время: 07:58 • Оптика: Wide / Main (1x) (23mm экв.)",
         "story": "Тропа выводит нас к исполинскому каменному бастиону, сложенному из окатанных ветром и морозом гранитных глыб на самом краю обрыва. Пока мы переводим дух в прохладной тени скалы, косые утренние лучи пробивают лёгкую дымку над противоположным берегом Невады, прочерчивая над стальной гладью озера наклонные серебристые столбы света."
       },
       {
         "media": "./Photos_web/20260604_124901.jpg",
         "is_video": false,
         "title": "Lake Tahoe East Shore — Дуэт на фоне горного моря (Высота: 1893 м)",
+        "meta": "Время: 12:49 • Оптика: Wide / Main (1x) (25mm экв.)",
         "story": "После четырехчасового трека по скалам Рубикона мы перебираемся на солнечный невадский берег и делаем привал на высокой видовой террасе среди сосен. За нашими плечами раскинулось крупнейшее высокогорное озеро Северной Америки — тридцать пять километров чистейшей лазури от края до края, обрамленной снежными гребнями Сьерра-Невады."
       },
       {
         "media": "./Photos_web/20260604_125926.jpg",
         "is_video": false,
         "title": "Memorial Point Overlook — Изумрудное ожерелье Невады (Высота: 1895 м)",
+        "meta": "Время: 12:59 • Оптика: Ultra-Wide (0.6x) (13mm экв.)",
         "story": "С панорамного кармана над шоссе NV-28 восточное побережье открывается во всей своей первозданной геометрии. Внизу, прямо за лентой асфальта, крошечные гранитные островки и песчаные бухты утопают в сосновом лесу — в XIX веке эти склоны почти полностью вырубили ради крепей для серебряных шахт Комстока, но сегодня молодые столетние сосны вновь надежно укрывают берег."
       },
       {
         "media": "./Photos_web/20260604_125935.jpg",
         "is_video": false,
         "title": "Memorial Point Overlook — Гранитный островок и сапфировый простор (Высота: 1895 м)",
+        "meta": "Время: 12:59 • Оптика: Portrait / Tele (3x) (69mm экв.)",
         "story": "Стоит переключиться со сверхширокого угла на трёхкратный телеобъектив, как взгляд выхватывает из огромной панорамы уютную потайную бухту прямо под сосновым склоном. Между пушистыми макушками хвои светится прозрачное аквамариновое мелководье с россыпью округлых гранитных валунов, чуть поодаль на глубокой кобальтовой воде дрейфует одинокий белый катер, а на горизонте, за тридцатью километрами водной глади, белеют снежные карнизы западного хребта Сьерра-Невады."
       },
       {
         "media": "./Photos_web/20260604_130933.jpg",
         "is_video": false,
         "title": "Tahoe East Shore Trail — Портал к бирюзовой воде (Высота: 1890 м)",
+        "meta": "Время: 13:09 • Оптика: Wide / Main (1x) (23mm экв.)",
         "story": "Шагнув в прохладный полумрак подземного перехода со стенами, расписанными силуэтами озерных рыб и волн, мы словно видим живую картину в массивной каменной раме. В квадрате яркого полуденного света велосипедисты замерли у парапета над ослепительно синей гладью Тахо — не зря этот трехмильный променад от Инклайн-Виллидж до Сэнд-Харбор называют самой красивой прибрежной дорожкой Америки."
       },
       {
         "media": "./Photos_web/20260604_132434.jpg",
         "is_video": false,
         "title": "Sand Harbor — Солнечная рябь на гранитном мелководье (Высота: 1880 м)",
+        "meta": "Время: 13:24 • Оптика: Wide / Main (1x) (23mm экв.)",
         "story": "Спустившись к самой воде в районе Сэнд-Харбор, мы долго стоим у прибоя, завороженные игрой преломленного света на дне. Отшлифованные тысячелетиями светлые гранитные валуны и каждая мелкая галька под водой оплетены живой золотистой сеткой солнечных бликов, а вдали над синей гладью белеют снежники западного берега."
       },
       {
         "media": "./Photos_web/20260604_132802.jpg",
         "is_video": false,
         "title": "Sand Harbor — Флотилия канадских казарок среди валунов (Высота: 1876 м)",
+        "meta": "Время: 13:28 • Оптика: Wide / Main (1x) (23mm экв.)",
         "story": "В тихой бухте между нагретыми полуденным солнцем каменными глыбами деловито курсирует выводок диких канадских казарок. Птицы совершенно не боятся нашего присутствия и плавно скользят над прозрачным дном, отбрасывая четкие тени на подводную гальку."
       },
       {
         "media": "./Photos_web/20260604_134151.jpg",
         "is_video": false,
         "title": "Tahoe East Shore Trail — Изумрудный калейдоскоп и золотая пыльца (Высота: 1885 м)",
+        "meta": "Время: 13:41 • Оптика: Wide / Main (1x) (23mm экв.)",
         "story": "Опершись на тёплые перила променада над самым обрывом, невозможно оторвать взгляд от того, как играет полуденный свет в прозрачной воде под соснами. В начале июня цветущий хвойный лес осыпает берега невесомой золотистой пыльцой, и лёгкое течение сплетает её на поверхности воды в причудливые янтарные ленты прямо над затопленными гранитными валунами. Чуть дальше от берега изумрудное мелководье вспыхивает неоново-бирюзовой полосой и растворяется в бездонной синеве бухты Кристал-Бей."
       },
       {
         "media": "./Photos_web/20260604_134537.jpg",
         "is_video": false,
         "title": "East Shore Coves — Каменный сад в неоновой лагуне (Высота: 1885 м)",
+        "meta": "Время: 13:45 • Оптика: Wide / Main (1x) (23mm экв.)",
         "story": "С высокой береговой тропы мы смотрим прямо вниз на затопленный лабиринт круглых гранитных мегалитов. Когда солнце стоит в зените, чистейшая ледниковая вода Тахо работает как гигантский светофильтр: на песчаных прогалинах между темными камнями вспыхивают пятна почти светящейся неоновой бирюзы."
       },
       {
         "media": "./Photos_web/20260604_151701.jpg",
         "is_video": false,
         "title": "Zephyr & Glenbrook Coves — Лодки в аквамариновой бухте (Высота: 1898 м)",
+        "meta": "Время: 15:17 • Оптика: Wide / Main (1x) (23mm экв.)",
         "story": "Перед тем как свернуть на перевал Спунер-Саммит и начать затяжной спуск в долину Карсон, мы бросаем прощальный взгляд на укромную бухту с длинными деревянными пирсами. Белые катера, покачивающиеся на привязи над бирюзовым песчаным дном, кажутся парящими прямо в воздухе — идеальный финальный аккорд нашего большого дня на озере Тахо."
       },
       {
         "media": "./Photos_web/20260604_084907.jpg",
         "is_video": false,
         "title": "Rubicon Trail — Алый «снежный цветок» в сосновой хвое (Высота: 1965 м)",
+        "meta": "Время: 08:49 • Оптика: Tele / Macro (2x) (45mm экв.)",
         "story": "Прямо у тропы сквозь толстый ковер сухих иголок пробивается удивительное создание высокогорий Сьерра-Невады — ярко-рубиновый «снежный цветок» (*Sarcodes sanguinea*). Лишенное хлорофилла и зеленых листьев, это редкое растение никогда не занимается фотосинтезом, а получает питание от подземных грибниц, вспыхивая в полумраке соснового леса словно живой факел после схода весеннего снега."
       },
       {
         "media": "./Photos_web/20260604_085731.jpg",
         "is_video": false,
         "title": "Rubicon Trail Overlook — «Самая прекрасная картина на Земле» (Высота: 1972 м)",
+        "meta": "Время: 08:57 • Оптика: Ultra-Wide (0.6x) (13mm экв.)",
         "story": "На скальной полке с панорамным стендом мы сверяем силуэты вершин на горизонте и перечитываем знаменитые слова Марка Твена, назвавшего Тахо «самой прекрасной картиной, какую только может предложить весь земной шар». Два миллиона лет назад колоссальный блок земной коры — грабен — провалился здесь между хребтами Сьерра-Невада и Карсон, образовав чашу глубиной 501 метр, воды которой хватило бы, чтобы покрыть всю территорию Калифорнии тридцатисантиметровым слоем."
       },
       {
         "media": "./Photos_web/20260604_101651.jpg",
         "is_video": false,
         "title": "Old Rubicon Point Lighthouse — Самый высокогорный маяк Америки (Высота: 1949 м)",
+        "meta": "Время: 10:16 • Оптика: Wide / Main (1x) (23mm экв.)",
         "story": "На обратном пути к бухте Лестер-Бич мы заглядываем к миниатюрной деревянной башенке с гонтовой крышей, приютившейся на отвесном гранитном уступе высоко над водой. Построенный в 1916 году на отметке почти двух тысяч метров над уровнем моря, старый маяк Рубикон-Пойнт вошел в историю как один из самых высокогорных навигационных маяков мира, указывавший путь пароходам на коварном повороте в Эмеральд-Бей."
       }
     ]
@@ -1496,18 +1270,21 @@
         "media": "./Photos_web/20260605_082907.jpg",
         "is_video": false,
         "title": "Carson City — Прощание с невадской базой (Высота: 1427 м)",
+        "meta": "Время: 08:29 • Wide / Main (1x) (23mm экв.)",
         "story": "Проведя две ночи в предгорьях у Bismark Peak, мы собираем рюкзаки и перед самым выездом в сторону Рино улыбаемся домашнему кодексу на фактурной стене гостевой ванной. Чёрная рамка с лаконичным сводом «Bathroom Rules» встречает нас как дружеское напутствие перед длинным перегоном по трассе US-395 через ветреные котловины Большого Бассейна. В таких бытовых деталях американского Airbnb есть своя тёплая дорожная романтика — короткая передышка в чужом уютном доме позади, а впереди снова ждут сотни километров шоссе."
       },
       {
         "media": "./Photos_web/20260605_082915.jpg",
         "is_video": false,
         "title": "Carson City — Записка от хозяйки Tiame (Высота: 1427 м)",
+        "meta": "Время: 08:29 • Ultra-Wide (0.6x) (13mm экв.)",
         "story": "Рядом в деревянной рамке под стеклом висит обстоятельное письмо от хозяйки дома Тиаме и её мужа Энтони — настоящий шедевр заботливой невадской дипломатии. Самый трогательный пункт просит гостей обязательно опускать крышку унитаза, иначе хозяйские собаки тут же прибегут пить воду с голубой бытовой химией. Посмеявшись над этой трогательной заботой о четвероногих обитателях дома, мы грузим вещи в наш Honda Fit, заправляем полный бак дешёвого невадского бензина и берём курс на север — через шопинг-паузу в Рино и границу Hallelujah Junction к сосновым предгорьям Сьюзанвилла."
       },
       {
         "media": "./Photos_web/20260605_185100.jpg",
         "is_video": false,
         "title": "Susanville Ranch Park — Вечерний лес на Canyon Trail (Высота: 1315 м)",
+        "meta": "Время: 18:51 • Wide / Main (1x) (23mm экв.)",
         "story": "После дорожного дня, заправки в Неваде и пересечения калифорнийской границы у Hallelujah Junction мы выходим размять ноги в предзакатную прохладу парка Susanville Ranch. Старая лесовозная дорога Old Paul Bunyan Road уводит нас под полог сосен Джеффри и пондероза к журчащему внизу ручью Paiute Creek, где воздух густо настоен на нагретой за день смоле и сухой хвое. Прямо на рыжем ковре из сосновых игл и дубовых листьев мы замечаем огромный пушистый шар дикого козлобородника (*Tragopogon dubius*) — гигантского горного «одуванчика», чьи тонкие парашютики светятся в мягких лучах вечернего солнца, ставя тихую созерцательную точку в нашем переходе к вулканам Каскадных гор."
       }
     ]
@@ -1521,102 +1298,119 @@
         "media": "./Photos_web/20260606_080900.mp4",
         "is_video": true,
         "title": "McArthur-Burney Falls — Гром воды и живая базальтовая стена (Высота: 872 м)",
+        "meta": "Время: 08:09 • Wide / Main (1x)",
         "story": "Едва мы подошли к краю ущелья в восемь утра, нас накрыл густой басовитый гул: с 39-метрового уступа срываются две главные струи, а вся пористая базальтовая стена вокруг буквально сочится десятками серебристых водопадов помельче. Секрет этой магии, которую президент Теодор Рузвельт окрестил «восьмым чудом света», кроется под землёй — родники талых вод круглый год выбрасывают сквозь слои старой лавы почти 380 миллионов литров ледяной воды в сутки при неизменных восьми градусах тепла. В утренней прохладе над изумрудной чашей поднимается облако водяной пыли, и кажется, будто сама скала дышит и переливается на солнце."
       },
       {
         "media": "./Photos_web/20260606_081047.jpg",
         "is_video": false,
         "title": "McArthur-Burney Falls — Утренний смотровой балкон (Высота: 872 м)",
+        "meta": "Время: 08:10 • Wide / Main (1x) (23mm экв.)",
         "story": "Задержались у каменного парапета верхней смотровой площадки, пока раннее солнце только начинало пробивать кроны высоких сосен и пихт. Мы приехали как раз вовремя — до основного потока туристов каньон принадлежит только нам, шуму воды и свежему хвойному воздуху. Стоя в тёплых куртках над кипящим амфитеатром Burney Falls, уже предвкушаем спуск на самое дно этого влажного зелёного кратера."
       },
       {
         "media": "./Photos_web/20260606_081934.jpg",
         "is_video": false,
         "title": "Burney Falls Loop Trail — Изумрудный амфитеатр (Высота: 843 м)",
+        "meta": "Время: 08:19 • Wide / Main (1x) (23mm экв.)",
         "story": "Спускаясь по серпантину тропы всё ниже в каньон, мы ловим момент, когда весь полукруг водопада раскрывается перед нами как на ладони. Здесь особенно хорошо видно, как прозрачные потоки вырываются прямо из толщи замшелого базальта на разной высоте — за миллион лет новые лавовые щиты накрыли древнее русло, превратив скалу в гигантскую природную губку. Бирюзовая заводь внизу бурлит белой пеной, а на камнях у берега застыли огромные выбеленные стволы поваленных деревьев."
       },
       {
         "media": "./Photos_web/20260606_082205.jpg",
         "is_video": false,
         "title": "Подножие Burney Falls — В облаке ледяных брызг (Высота: 838 м)",
+        "meta": "Время: 08:22 • Ultra-Wide (0.6x) (13mm экв.)",
         "story": "У самой воды внизу каньона царит свой собственный микроклимат: даже когда наверху уже пригревает июньское солнце, здесь в лицо летит колючая ледяная взвесь. Мы накинули капюшоны и подобрались по валунам почти к кромке бурлящего бассейна, где грохот падающей воды заглушает любые слова. Удивительное чувство свежести — будто стоишь внутри огромного природного кондиционера, работающего без перерыва тысячи лет."
       },
       {
         "media": "./Photos_web/20260606_083359.jpg",
         "is_video": false,
         "title": "Burney Creek — Мост Rainbow Bridge в хвойном каньоне (Высота: 819 м)",
+        "meta": "Время: 08:33 • Ultra-Wide (0.6x) (13mm экв.)",
         "story": "Продолжая петлю маршрута вдоль ручья Burney Creek, мы вышли к деревянному мосту Rainbow Bridge, перекинутому над удивительно тихой и прозрачной водой. Всего в нескольких сотнях метров позади беснуется водопад, а здесь поток уже смиряет нрав и неспешно скользит среди замшелых берегов к озеру Бриттон. Косые солнечные лучи прошивают ветви вековых дугласовых пихт, рассыпая по воде золотистые блики."
       },
       {
         "media": "./Photos_web/20260606_091855.jpg",
         "is_video": false,
         "title": "Lake Britton Marina — Причал на тёмно-синей воде (Высота: 810 м)",
+        "meta": "Время: 09:18 • Wide / Main (1x) (34mm экв.)",
         "story": "Завершив круг у водопада, мы заглянули к лодочному причалу озера Бриттон, куда впадает ледяной Burney Creek. После тенистого и шумного ущелья здесь царит сонная утренняя безмятежность: лёгкая рябь играет на густо-синей воде, а у понтонов покачиваются прогулочные катера. Настоящая открытка калифорнийского лета перед тем, как снова вырулить на лесное шоссе CA-89 в сторону легендарной Шасты."
       },
       {
         "media": "./Photos_web/20260606_095158.jpg",
         "is_video": false,
         "title": "Volcanic Legacy Scenic Byway (CA-89) — Явление горы Шаста (Высота: 950 м)",
+        "meta": "Время: 09:51 • Super Telephoto (10x) (230mm экв.)",
         "story": "Вынырнув из очередного лесного виража на шоссе CA-89, мы невольно сбросили газ: прямо в створе идеально прямой дороги, словно мираж в полнеба, вырос ослепительно белый конус горы Шаста. Длиннофокусная оптика 230 мм спрессовала перспективу, подчеркнув исполинский масштаб этого стратовулкана высотой 4322 метра, который возвышается над окружающей долиной почти на три километра. Семь его ледников сияют под утренним солнцем так ярко, что кажется, будто вершина парит в воздухе отдельно от тёмно-зелёной стены соснового леса."
       },
       {
         "media": "./Photos_web/20260606_102736.jpg",
         "is_video": false,
         "title": "Lower McCloud Falls — Базальтовая купель и изумрудная заводь (Высота: 969 м)",
+        "meta": "Время: 10:27 • Telephoto (3x) (69mm экв.)",
         "story": "Знакомство с каскадом реки Макклауд мы начали с Нижнего водопада (Lower Falls), где вся мощь ледникового потока срывается с четырёхметровой базальтовой ступени в глубокую бирюзовую чашу. На отполированных временем лавовых плитах у самой воды местные уже расставили складные кресла — в жаркие дни здесь любят нырять со скал в обжигающе холодную воду, стекающую с ледников Шасты. Отсюда стартует наша лесная тропа вдоль каньона к среднему и верхнему порогам."
       },
       {
         "media": "./Photos_web/20260606_110331.jpg",
         "is_video": false,
         "title": "McCloud River Trail — Трофейная радужная форель (Высота: 969 м)",
+        "meta": "Время: 11:03 • Wide / Main (1x) (23mm экв.)",
         "story": "По пути вдоль берега мы разговорились с местным рыбаком в камуфляжной панаме, и он с гордостью поднял на кукане свой утренний улов — двух увесистых серебристо-пятнистых форелей. Чистейшая и богатая кислородом река Макклауд прославилась на весь мир ещё в конце XIX века: именно из здешних рыбоводных станций калифорнийскую радужную форель (*Oncorhynchus mykiss*) когда-то расселили по рекам Европы, Новой Зеландии и Южной Америки. Встретить живую легенду этих вод буквально в двух шагах от тропы оказалось настоящей удачей."
       },
       {
         "media": "./Photos_web/20260606_112149.jpg",
         "is_video": false,
         "title": "Каньон реки Макклауд — Любопытный золотистый суслик (Высота: 987 м)",
+        "meta": "Время: 11:21 • Wide / Main (1x) (23mm экв.)",
         "story": "На россыпи угловатых серых базальтов у края тропы нас вышел поприветствовать золотисто-мантийный суслик (*Callospermophilus lateralis*) с аккуратными белыми полосками на спине. Малыш деловито уселся на тёплом камне и с видом полноправного хозяина леса следил за нашими рюкзаками в надежде на перекус. В отличие от пугливых оленей, эти юркие обитатели Каскадных гор совершенно не боятся путешественников и охотно позируют с расстояния вытянутой руки."
       },
       {
         "media": "./Photos_web/20260606_113031.jpg",
         "is_video": false,
         "title": "Middle McCloud Falls — Тридцатиметровый водный занавес (Высота: 987 м)",
+        "meta": "Время: 11:30 • Wide / Main (1x) (23mm экв.)",
         "story": "Спустившись к воде у Среднего водопада (Middle Falls), мы оказались перед самым грандиозным зрелищем всего каньона: река разливается здесь по всей ширине уступа и обрушивается вниз сплошной 15-метровой белой стеной. Солнце играет на миллионах капель, а ослепительная пена врезается в оливково-изумрудное озеро, обрамлённое тёмными скалами и стройными соснами. Мы долго просидели на нагретых валунах у берега, заворожённые тем, как этот широкий водяной занавес перекликается эхом со стенами ущелья."
       },
       {
         "media": "./Photos_web/20260606_123930.jpg",
         "is_video": false,
         "title": "Пикник под соснами у McCloud River (Высота: 1015 м)",
+        "meta": "Время: 12:39 • Wide / Main (1x) (23mm экв.)",
         "story": "После подъёма по лесной тропе самое время устроить неспешный привал в тени вековых сосен Пондероза. На грубом деревянном столе посреди золотистой хвои — ледяная зелёная бутылка San Pellegrino из нашей дорожной термосумки, прохладный ветерок с реки и густой смолистый аромат прогретого полуденного леса. Такие тихие паузы посреди маршрута запоминаются не меньше, чем сами природные чудеса."
       },
       {
         "media": "./Photos_web/20260606_130826.jpg",
         "is_video": false,
         "title": "Ущелье Upper McCloud Falls — Лавовый жёлоб и дармера (Высота: 1034 м)",
+        "meta": "Время: 13:08 • Wide / Main (1x) (23mm экв.)",
         "story": "Поднявшись к Верхнему водопаду, мы заглянули в узкую базальтовую теснину, где за тысячи лет свирепый поток выточил в застывшей лаве гладкие желоба и водовороты. У самой кромки кипящей белой пены цепляются за жизнь ярко-зелёные зонтики дармеры щитовидной (*Darmera peltata*) — реликтового растения горных рек Северной Калифорнии, которое обожает ледяные брызги. Контраст угольно-серых вулканических стен, сочной листвы и бирюзовой воды здесь просто завораживает."
       },
       {
         "media": "./Photos_web/20260606_131212.jpg",
         "is_video": false,
         "title": "Смотровая над Upper McCloud Falls — Над нефритовой чашей (Высота: 1034 м)",
+        "meta": "Время: 13:12 • Wide / Main (1x) (25mm экв.)",
         "story": "Стоя вдвоём на высоком деревянном балконе над обрывом, мы любуемся тем, как яростный поток Upper Falls внезапно успокаивается в глубоком природном бассейне. Из-за растворённой в воде ледниковой муки и особой глубины каньона вода внизу светится густым нефритово-бирюзовым оттенком, который кажется почти нереальным. Позади остались все три ступени реки Макклауд, каждая со своим характером и голосом."
       },
       {
         "media": "./Photos_web/20260606_131451.jpg",
         "is_video": false,
         "title": "Upper McCloud Falls — Прорыв сквозь базальтовый каньон (Высота: 1034 м)",
+        "meta": "Время: 13:14 • Wide / Main (1x) (23mm экв.)",
         "story": "Прощальный взгляд на Верхний водопад: в отличие от широкого занавеса Middle Falls, здесь вся река сжимается в узкую каменную горловину и выстреливает мощной белой струёй в тихую лагуну. Отвесные стены старой лавы вокруг бассейна хранят следы древних извержений, сформировавших весь этот край на южных склонах Шасты. Сделав этот кадр, мы возвращаемся к машине, чтобы заглянуть ещё в одно потайное ущелье у трассы I-5."
       },
       {
         "media": "./Photos_web/20260606_140247.jpg",
         "is_video": false,
         "title": "Hedge Creek Falls — Потайной грот под базальтовыми колоннами (Высота: 758 м)",
+        "meta": "Время: 14:02 • Wide / Main (1x) (25mm экв.)",
         "story": "Всего пять минут спуска от шумной магистрали I-5 на окраине городка Дансмьюр — и мы попадаем в тенистый прохладный грот, где с десятиметрового карниза из столбчатого базальта струится тонкая серебряная вуаль Hedge Creek Falls. Тропа здесь устроена так необычно, что проходит прямо по природной нише позади падающей воды. В XIX веке в этой самой пещере за водяной завесой прятался от шерифов знаменитый калифорнийский грабитель дилижансов Черный Барт (Black Bart), а сегодня здесь царят лишь папоротники, мох и умиротворяющий шелест ручья."
       },
       {
         "media": "./Photos_web/20260606_140253.jpg",
         "is_video": false,
         "title": "Hedge Creek Falls — Поцелуй у серебряного водопада (Высота: 758 м)",
+        "meta": "Время: 14:02 • Wide / Main (1x) (25mm экв.)",
         "story": "Наш четвёртый и самый камерный водопад за этот насыщенный день стал идеальной точкой перед заездом в Mt. Shasta. Пока за спиной с базальтового козырька рассыпается хрустальными искрами ручей Хедж-Крик, мы ловим тихий романтический момент вдвоём в полумраке мшистого ущелья. Впереди — короткий рывок до отеля у подножия великой горы и заслуженный отдых после большой водопадной охоты."
       }
     ]
@@ -1630,72 +1424,84 @@
         "media": "./Photos_web/20260607_063515.jpg",
         "is_video": false,
         "title": "Mt. Shasta & US-97 North — Прощальный взгляд в зеркало заднего вида (Высота: 1080 м)",
+        "meta": "Время: 06:35 • Wide / Main (1x) (23mm экв.)",
         "story": "В половине седьмого утра воздух у подножия Шасты звенит от свежести, а сама белоснежная громада вулкана уже вовсю купается в первых лучах восходящего солнца. Выруливая на север по пустынному шоссе US-97 в сторону орегонской границы, мы то и дело ловим её сияющий силуэт и над сосновыми макушками, и в боковом зеркале нашей машины. Два дня калифорнийский стратовулкан был нашим главным ориентиром, а теперь мы передаём эстафету древним вулканам Орегона."
       },
       {
         "media": "./Photos_web/20260607_094434.jpg",
         "is_video": false,
         "title": "Crater Lake National Park — Первая встреча с сапфировой бездной (Высота: 2160 м)",
+        "meta": "Время: 09:44 • Ultra-Wide (0.6x) (13mm экв.)",
         "story": "Поднявшись по серпантину сквозь метровые июньские сугробы к кромке Rim Village, мы замерли у обрыва: внизу, в гигантской восьмикилометровой чаше взорвавшегося семь с лишним тысяч лет назад вулкана Мазама, расстилалась вода такого невозможного кобальтово-сапфирового цвета, будто её подсветили изнутри. В это утро нам выпал редчайший джекпот — полный штиль превратил самое глубокое озеро Америки (592 метра!) в безупречное зеркало, где отражаются каждое облачко и заснеженные стены кальдеры. Под ногами ещё хрустит плотный весенний фирн, а прямо перед нами из синей глади вырастает правильный конус острова Wizard Island."
       },
       {
         "media": "./Photos_web/20260607_095016.jpg",
         "is_video": false,
         "title": "Кромка кальдеры Crater Lake — Утро на высоте двух километров (Высота: 2160 м)",
+        "meta": "Время: 09:50 • Wide / Main (1x) (25mm экв.)",
         "story": "На высоте больше двух тысяч метров июнь ощущается совсем иначе, чем в долине: мы укутались в тёплые пуховики и накинули капюшоны, вдыхая морозный горный воздух, пахнущий хвоей тсуги и тающим снегом. За нашими спинами — бездонная синева воды, в которую не впадает ни один ручей и ни одна река: веками эта чаша наполнялась только чистейшим снегом и дождём, поэтому солнечный свет пробивает толщу воды на рекордные сорок метров. Стоять вдвоём на краю древнего супервулкана в такой абсолютной тишине — ощущение почти инопланетное."
       },
       {
         "media": "./Photos_web/20260607_095541.jpg",
         "is_video": false,
         "title": "Rim Trail — В объятиях древней белокорой сосны (Высота: 2170 м)",
+        "meta": "Время: 09:55 • Ultra-Wide (0.6x) (13mm экв.)",
         "story": "На самом краю отвесной стены кальдеры за каменистую почву цепляются кряжистые, закрученные ветрами стволы высокогорных сосен и горных тсуг, переживших сотни снежных зим. Мы устроились прямо в развилке одного из таких могучих деревьев-стражей, чьи корни нависают над синей пропастью озера. Кора, выбеленная горным солнцем и метелями, кажется настоящей живой скульптурой на фоне лазурного горизонта."
       },
       {
         "media": "./Photos_web/20260607_101709.jpg",
         "is_video": false,
         "title": "Причал у подножия кальдеры — Изумрудное мелководье в 10-кратном зуме (Высота: 2170 м)",
+        "meta": "Время: 10:17 • Super Telephoto (10x) (230mm экв.)",
         "story": "Наведя 230-миллиметровый суперзум с вершины обрыва почти отвесно вниз, мы разглядели крошечные деревянные домики лодочной станции у самой кромки воды. Через сильную оптику особенно хорошо видно, как у каменистого берега прозрачная вода вспыхивает яркой тропической бирюзой и тут же, на резком свале глубины, переходит в густой ультрамарин. Трудно поверить, что до этих игрушечных крыш у подножия скалы — почти триста метров крутого вертикального сброса."
       },
       {
         "media": "./Photos_web/20260607_115317.jpg",
         "is_video": false,
         "title": "Watchman Overlook — Зеркало облаков и пик Маунт-Скотт (Высота: 2280 м)",
+        "meta": "Время: 11:53 • Ultra-Wide (0.6x) (13mm экв.)",
         "story": "Переехав выше по West Rim Drive к смотровой площадке Watchman Overlook, мы увидели всю северную и восточную дугу кальдеры в обрамлении лёгких перистых облаков. На противоположном берегу, за синим зеркалом озера, белеет снежная шапка пика Маунт-Скотт (2722 м) — самой высокой точки национального парка. Здесь, на открытом ветрам скальном балконе, особенно остро понимаешь масштаб древней катастрофы, когда гора высотой почти в четыре километра в одночасье провалилась в собственную магматическую камеру."
       },
       {
         "media": "./Photos_web/20260607_115744.jpg",
         "is_video": false,
         "title": "Остров Wizard Island — Вулкан внутри вулкана (Высота: 2280 м)",
+        "meta": "Время: 11:57 • Wide / Main (1x) (23mm экв.)",
         "story": "С площадки Watchman Overlook до острова Wizard Island, кажется, можно дотянуться рукой: его правильный шлаковый конус поднимается над водой на 230 метров, увенчанный на макушке собственным девяностометровым кратером под названием «Котелок ведьмы» (Witches Cauldron). Этот молодой вулкан вырос со дна кальдеры уже после обрушения горы Мазама, а у его подножия чернеют застывшие потоки угловатой андезитовой лавы. В неподвижной воде отражается каждая сосна на склоне острова, создавая полную иллюзию невесомости."
       },
       {
         "media": "./Photos_web/20260607_120738.jpg",
         "is_video": false,
         "title": "Склоны Watchman Peak — Лавовые мысы острова Колдуна (Высота: 2300 м)",
+        "meta": "Время: 12:07 • Ultra-Wide (0.6x) (13mm экв.)",
         "story": "Поднявшись ещё немного вдоль тропы к пику Уотчмен (2300 м), мы открыли для себя лучший ракурс на причудливые лавовые полуострова западного берега Wizard Island. Чёрные зазубренные языки застывшей породы образуют укромные бирюзовые бухты и пролив Skell Channel, отделяющий остров от западной стены кальдеры. В индейских легендах племени кламат здесь развернулась великая битва духов неба и подземного мира, и, глядя на этот первозданный пейзаж, в мифы верится безоговорочно."
       },
       {
         "media": "./Photos_web/20260607_121816.jpg",
         "is_video": false,
         "title": "Снежники Западного Рима — Зима и лето в одном кадре (Высота: 2300 м)",
+        "meta": "Время: 12:18 • Wide / Main (1x) (23mm экв.)",
         "story": "На переднем плане под ярким полуденным солнцем искрится нетронутое белое снежное поле, а сразу за ним — тёмный конус Wizard Island и безбрежная синяя гладь Crater Lake. В этих горах выпадает в среднем по тринадцать метров снега за зиму, поэтому даже в начале июня сугробы на перевалах лежат в человеческий рост. Контраст тёплого летнего солнца на лице и зимнего снега под ботинками дарит совершенно детский восторг."
       },
       {
         "media": "./Photos_web/20260607_122038.jpg",
         "is_video": false,
         "title": "Поцелуй над кальдерой Crater Lake (Высота: 2300 м)",
+        "meta": "Время: 12:20 • Wide / Main (1x) (23mm экв.)",
         "story": "На деревянной скамье у самого края обзорной площадки мы устроили привал вдвоём — с видом, который смело можно назвать одним из самых романтичных за всё наше путешествие. Позади нас в синем зеркале озера дремлет остров Колдуна, в небе плывут пушистые облака, а вокруг — ни единого звука, кроме тихого шороха сосновых иголок. Мгновение абсолютного счастья на вершине орегонских Каскадов."
       },
       {
         "media": "./Photos_web/20260607_123054.jpg",
         "is_video": false,
         "title": "Crater Lake — Прощальная панорама сапфирового кольца (Высота: 2250 м)",
+        "meta": "Время: 12:30 • Ultra-Wide (0.6x) (13mm экв.)",
         "story": "Перед тем как начать спуск с гор в сторону Бенда, мы ещё раз окинули взглядом всю гигантскую чашу озера на сверхширокий объектив 13 мм. Солнце поднялось в зенит, сделав воду ещё более глубокой и бархатисто-синей, а белые снежные карнизы по периметру кальдеры стали похожи на драгоценную оправу. Прощаемся с Crater Lake и берём курс на север по лесным шоссе Центрального Орегона."
       },
       {
         "media": "./Photos_web/20260607_181109.jpg",
         "is_video": false,
         "title": "Bend, Oregon — Вечерний базовый лагерь на Juniper Street (Высота: 1104 м)",
+        "meta": "Время: 18:11 • Wide / Main (1x) (23mm экв.)",
         "story": "К вечеру мы наконец добрались до нашего дома на западной стороне Бенда и выгрузили на кухонный остров весь наш верный дорожный арсенал: синюю термосумку Igloo, походный термос, банки грибного супа Campbell's и любимые сладости из Trader Joe's — арахисовые корзинки и кофейные зёрна в шоколаде. Заселение, правда, не обошлось без курьёзов: местная клининговая служба явно спешила к нашему приезду, оставив пару бытовых недочётов в ванной и на полотенцах, которые мы тут же зафиксировали на камеру для хозяев. Но мягкий жёлтый кожаный диван в гостиной, горячий ужин и перспектива провести в этих краях целых три дня быстро сняли всю дорожную усталость."
       }
     ]
@@ -1715,10 +1521,10 @@
         tg.enableClosingConfirmation();
       }
 
-      renderNavPills();
-      renderMobileDaySelector();
+      renderDayDrawer();
       renderAlbumView();
       setupTouchAndTap();
+      setupTimelineSeeking();
       goToDay(0, false);
       
       window.addEventListener('keydown', (e) => {
@@ -1735,76 +1541,64 @@
       });
     }
 
-    function renderNavPills() {
-      const container = document.getElementById('dayPillsContainer');
-      container.innerHTML = '';
+    function renderDayDrawer() {
+      const grid = document.getElementById('tgDrawerGrid');
+      grid.innerHTML = '';
       daysData.forEach((day, index) => {
         const btn = document.createElement('button');
-        btn.className = 'day-pill' + (index === currentDayIndex ? ' active' : '');
-        btn.textContent = `День ${day.day_num}`;
-        btn.onclick = () => goToDay(index, true);
-        container.appendChild(btn);
-      });
-    }
-
-    function renderMobileDaySelector() {
-      const container = document.getElementById('mobileDaySelector');
-      container.innerHTML = '';
-      daysData.forEach((day, index) => {
-        const btn = document.createElement('button');
-        btn.className = 'mobile-day-pill' + (index === currentDayIndex ? ' active' : '');
+        btn.className = 'tg-drawer-btn' + (index === currentDayIndex ? ' active' : '');
         btn.textContent = `День ${day.day_num}`;
         btn.onclick = () => {
           goToDay(index, true);
-          btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+          closeDayDrawer();
         };
-        container.appendChild(btn);
+        grid.appendChild(btn);
       });
     }
 
-    function updatePills() {
-      const pills = document.querySelectorAll('.day-pill');
-      pills.forEach((p, idx) => {
-        if (idx === currentDayIndex) p.classList.add('active');
-        else p.classList.remove('active');
+    function updateDrawerSelection() {
+      const btns = document.querySelectorAll('.tg-drawer-btn');
+      btns.forEach((b, idx) => {
+        if (idx === currentDayIndex) b.classList.add('active');
+        else b.classList.remove('active');
       });
+    }
 
-      const mPills = document.querySelectorAll('.mobile-day-pill');
-      mPills.forEach((p, idx) => {
-        if (idx === currentDayIndex) {
-          p.classList.add('active');
-          p.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-        } else {
-          p.classList.remove('active');
-        }
-      });
+    function openDayDrawer(e) {
+      if (e) e.stopPropagation();
+      document.getElementById('tgDrawerModal').classList.add('active');
+    }
+
+    function closeDayDrawer() {
+      document.getElementById('tgDrawerModal').classList.remove('active');
+    }
+
+    function toggleViewMode(e) {
+      if (e) e.stopPropagation();
+      switchView(currentView === 'slideshow' ? 'album' : 'slideshow');
     }
 
     function switchView(view) {
       currentView = view;
-      const ssContainer = document.getElementById('slideshowContainer');
+      const ssViewport = document.getElementById('tgMediaViewport');
       const alContainer = document.getElementById('albumContainer');
-      const btnSS = document.getElementById('btnSlideshow');
-      const btnAL = document.getElementById('btnAlbum');
-      const mBtnSS = document.getElementById('mBtnSlideshow');
-      const mBtnAL = document.getElementById('mBtnAlbum');
+      const iconAlbum = document.getElementById('iconAlbumView');
+      const iconSlide = document.getElementById('iconSlideView');
+      const bottomOverlay = document.getElementById('tgBottom');
 
       if (view === 'slideshow') {
-        ssContainer.style.display = 'flex';
+        ssViewport.style.display = 'flex';
+        bottomOverlay.style.display = 'flex';
         alContainer.style.display = 'none';
-        btnSS.classList.add('active');
-        btnAL.classList.remove('active');
-        mBtnSS.classList.add('active');
-        mBtnAL.classList.remove('active');
+        iconAlbum.style.display = 'block';
+        iconSlide.style.display = 'none';
         updateSlideshow();
       } else {
-        ssContainer.style.display = 'none';
+        ssViewport.style.display = 'none';
+        bottomOverlay.style.display = 'none';
         alContainer.style.display = 'block';
-        btnSS.classList.remove('active');
-        btnAL.classList.add('active');
-        mBtnSS.classList.remove('active');
-        mBtnAL.classList.add('active');
-        // Restore UI visibility in album mode
+        iconAlbum.style.display = 'none';
+        iconSlide.style.display = 'block';
         if (isUiHidden) toggleUiVisibility();
         const daySec = document.getElementById(`album-day-${daysData[currentDayIndex].day_num}`);
         if (daySec) {
@@ -1816,7 +1610,7 @@
     function goToDay(dayIndex, showTitle = true) {
       currentDayIndex = dayIndex;
       currentSlideIndex = 0;
-      updatePills();
+      updateDrawerSelection();
 
       if (currentView === 'slideshow') {
         if (showTitle) {
@@ -1851,6 +1645,13 @@
       updateSlideshow();
     }
 
+    function formatTime(seconds) {
+      if (isNaN(seconds)) return "00:00";
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
     function updateSlideshow() {
       const dayData = daysData[currentDayIndex];
       if (!dayData || !dayData.slides.length) return;
@@ -1858,9 +1659,14 @@
       const slide = dayData.slides[currentSlideIndex];
       const img = document.getElementById('slideImg');
       const video = document.getElementById('slideVideo');
-      const soundBtn = document.getElementById('videoSoundBtn');
-      const mediaWrapper = document.getElementById('slideMediaWrapper');
+      const soundBtn = document.getElementById('tgSoundBtn');
+      const timeline = document.getElementById('tgTimeline');
+      const timelineFill = document.getElementById('tgTimelineFill');
+      const timelineTimer = document.getElementById('tgTimelineTimer');
+      const playIndicator = document.getElementById('tgPlayIndicator');
       
+      playIndicator.style.display = 'none';
+
       if (slide.is_video) {
         img.style.display = 'none';
         video.style.display = 'block';
@@ -1869,39 +1675,89 @@
         video.muted = true;
         video.load();
         video.play().catch(() => {});
-        if (soundBtn) {
-          soundBtn.style.display = 'flex';
-          updateSoundBtnState(true);
-        }
+        soundBtn.style.display = 'flex';
+        updateSoundBtnState(true);
+        timeline.style.display = 'flex';
+        timelineFill.style.width = '0%';
+        
         video.onloadedmetadata = () => {
-          if (video.videoWidth > video.videoHeight) {
-            mediaWrapper.classList.add('is-landscape');
-          } else {
-            mediaWrapper.classList.remove('is-landscape');
+          timelineTimer.textContent = `00:00 / ${formatTime(video.duration)}`;
+        };
+
+        video.ontimeupdate = () => {
+          if (video.duration) {
+            const pct = (video.currentTime / video.duration) * 100;
+            timelineFill.style.width = `${pct}%`;
+            timelineTimer.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
           }
+        };
+
+        video.onpause = () => {
+          playIndicator.style.display = 'flex';
+        };
+        video.onplay = () => {
+          playIndicator.style.display = 'none';
         };
       } else {
         video.pause();
         video.removeAttribute('src');
         video.style.display = 'none';
-        if (soundBtn) soundBtn.style.display = 'none';
+        video.ontimeupdate = null;
+        soundBtn.style.display = 'none';
+        timeline.style.display = 'none';
+
         img.style.display = 'block';
         img.style.opacity = '0';
         img.src = slide.media;
         img.onload = () => {
           img.style.opacity = '1';
-          if (img.naturalWidth > img.naturalHeight) {
-            mediaWrapper.classList.add('is-landscape');
-          } else {
-            mediaWrapper.classList.remove('is-landscape');
-          }
         };
       }
 
-      document.getElementById('slideDayLabel').textContent = `ДЕНЬ ${dayData.day_num}`;
-      document.getElementById('slideTitle').textContent = slide.title || 'Красивая точка маршрута';
-      document.getElementById('slideStory').textContent = slide.story;
-      document.getElementById('slideCounter').textContent = `${currentSlideIndex + 1} / ${dayData.slides.length}`;
+      // Top Header Info
+      document.getElementById('tgLocTitle').textContent = slide.title || `День ${dayData.day_num}`;
+      document.getElementById('tgSubMeta').textContent = slide.meta ? `ДЕНЬ ${dayData.day_num} • ${slide.meta}` : `ДЕНЬ ${dayData.day_num} • Экспедиция 2026`;
+      document.getElementById('tgCounterBar').textContent = `${currentSlideIndex + 1} из ${dayData.slides.length}`;
+
+      // Bottom Story Text
+      document.getElementById('tgStoryText').textContent = slide.story;
+    }
+
+    function setupTimelineSeeking() {
+      const track = document.getElementById('tgTimelineTrack');
+      let isSeeking = false;
+
+      function seek(e) {
+        const video = document.getElementById('slideVideo');
+        if (!video || !video.duration) return;
+        const rect = track.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clickX = clientX - rect.left;
+        const pct = Math.max(0, Math.min(1, clickX / rect.width));
+        video.currentTime = pct * video.duration;
+      }
+
+      track.addEventListener('mousedown', (e) => {
+        isSeeking = true;
+        seek(e);
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (isSeeking) seek(e);
+      });
+      window.addEventListener('mouseup', () => {
+        isSeeking = false;
+      });
+
+      track.addEventListener('touchstart', (e) => {
+        isSeeking = true;
+        seek(e);
+      }, { passive: true });
+      window.addEventListener('touchmove', (e) => {
+        if (isSeeking) seek(e);
+      }, { passive: true });
+      window.addEventListener('touchend', () => {
+        isSeeking = false;
+      });
     }
 
     function toggleSlideVideoAudio(e) {
@@ -1910,19 +1766,6 @@
       if (!video) return;
       video.muted = !video.muted;
       updateSoundBtnState(video.muted);
-    }
-
-    function toggleCardVideoAudio(videoEl, btnEl, e) {
-      if (e) e.stopPropagation();
-      if (!videoEl) return;
-      videoEl.muted = !videoEl.muted;
-      const isMuted = videoEl.muted;
-      const mutedIcon = btnEl.querySelector('.icon-muted');
-      const unmutedIcon = btnEl.querySelector('.icon-unmuted');
-      if (mutedIcon && unmutedIcon) {
-        mutedIcon.style.display = isMuted ? 'block' : 'none';
-        unmutedIcon.style.display = isMuted ? 'none' : 'block';
-      }
     }
 
     function updateSoundBtnState(isMuted) {
@@ -1934,21 +1777,18 @@
       }
     }
 
-    /* Toggle UI overlay on tap (Stories / Telegram immersive mode) */
+    /* Toggle UI overlay on tap (Native Telegram Media Viewer Immersive Mode) */
     function toggleUiVisibility() {
       isUiHidden = !isUiHidden;
-      const sidebar = document.getElementById('slideSidebar');
-      const bottomBar = document.getElementById('mobileBottomBar');
-      const topNav = document.getElementById('topNav');
+      const header = document.getElementById('tgHeader');
+      const bottom = document.getElementById('tgBottom');
 
       if (isUiHidden) {
-        if (sidebar) sidebar.classList.add('ui-hidden');
-        if (bottomBar) bottomBar.classList.add('ui-hidden');
-        if (topNav) topNav.classList.add('ui-hidden');
+        if (header) header.classList.add('ui-hidden');
+        if (bottom) bottom.classList.add('ui-hidden');
       } else {
-        if (sidebar) sidebar.classList.remove('ui-hidden');
-        if (bottomBar) bottomBar.classList.remove('ui-hidden');
-        if (topNav) topNav.classList.remove('ui-hidden');
+        if (header) header.classList.remove('ui-hidden');
+        if (bottom) bottom.classList.remove('ui-hidden');
       }
     }
 
@@ -1971,25 +1811,24 @@
       } else if (currentDayIndex > 0) {
         currentDayIndex--;
         currentSlideIndex = daysData[currentDayIndex].slides.length - 1;
-        updatePills();
         updateSlideshow();
       }
     }
 
     /* Touch Swiping and Tap Detection for Slideshow */
     function setupTouchAndTap() {
-      const container = document.getElementById('slideshowContainer');
+      const viewport = document.getElementById('tgMediaViewport');
       let touchStartX = 0;
       let touchStartY = 0;
       let touchStartTime = 0;
 
-      container.addEventListener('touchstart', (e) => {
+      viewport.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
         touchStartY = e.changedTouches[0].screenY;
         touchStartTime = Date.now();
       }, { passive: true });
 
-      container.addEventListener('touchend', (e) => {
+      viewport.addEventListener('touchend', (e) => {
         const touchEndX = e.changedTouches[0].screenX;
         const touchEndY = e.changedTouches[0].screenY;
         const duration = Date.now() - touchStartTime;
@@ -2009,25 +1848,18 @@
         // 2. Short Single Tap (< 300ms, minimal movement)
         if (Math.abs(deltaX) < 12 && Math.abs(deltaY) < 12 && duration < 300) {
           const target = e.target;
-          if (target.closest('.video-sound-btn') || target.closest('.nav-arrow') || target.closest('.title-slide-btn') || target.closest('.mobile-bottom-bar')) {
+          if (target.closest('.tg-icon-btn') || target.closest('.tg-back-btn') || target.closest('.tg-modal-drawer') || target.closest('.title-slide-btn') || target.closest('.tg-timeline-track')) {
             return;
           }
           toggleUiVisibility();
         }
       }, { passive: true });
 
-      // Desktop click on media area also toggles UI or can advance
-      const mediaWrapper = document.getElementById('slideMediaWrapper');
-      if (mediaWrapper) {
-        mediaWrapper.addEventListener('click', (e) => {
-          if (e.target.closest('.video-sound-btn')) return;
-          if (window.innerWidth <= 768) {
-            // Handled by touchend on mobile
-          } else {
-            toggleUiVisibility();
-          }
-        });
-      }
+      // Desktop click on viewport also toggles UI
+      viewport.addEventListener('click', (e) => {
+        if (e.target.closest('.tg-icon-btn') || e.target.closest('.title-slide-btn')) return;
+        toggleUiVisibility();
+      });
     }
 
     function renderAlbumView() {
@@ -2055,25 +1887,12 @@
           if (slide.is_video) {
             mediaHtml = `
               <div class="album-image-wrapper">
-                <video src="${slide.media}" autoplay loop muted playsinline webkit-playsinline preload="metadata" onclick="openLightbox('${slide.media}', true)"></video>
-                <button class="video-sound-btn" style="display:flex;" onclick="toggleCardVideoAudio(this.previousElementSibling, this, event)" title="Включить / выключить звук" aria-label="Звук">
-                  <svg class="icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                    <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
-                    <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
-                    <line x1="12" y1="19" x2="12" y2="23"></line>
-                    <line x1="8" y1="23" x2="16" y2="23"></line>
-                  </svg>
-                  <svg class="icon-unmuted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                  </svg>
-                </button>
+                <video src="${slide.media}" autoplay loop muted playsinline webkit-playsinline preload="metadata"></video>
               </div>
             `;
           } else {
             mediaHtml = `
-              <div class="album-image-wrapper" onclick="openLightbox('${slide.media}', false)">
+              <div class="album-image-wrapper">
                 <img src="${slide.media}" alt="${slide.title}" loading="lazy" />
               </div>
             `;
@@ -2091,32 +1910,6 @@
 
         container.appendChild(section);
       });
-    }
-
-    function openLightbox(src, isVideo) {
-      const modal = document.getElementById('lightboxModal');
-      const img = document.getElementById('lightboxImg');
-      const video = document.getElementById('lightboxVideo');
-
-      if (isVideo) {
-        img.style.display = 'none';
-        video.style.display = 'block';
-        video.src = src;
-        video.play().catch(() => {});
-      } else {
-        video.pause();
-        video.style.display = 'none';
-        img.style.display = 'block';
-        img.src = src;
-      }
-      modal.classList.add('active');
-    }
-
-    function closeLightbox() {
-      const modal = document.getElementById('lightboxModal');
-      const video = document.getElementById('lightboxVideo');
-      video.pause();
-      modal.classList.remove('active');
     }
 
     window.addEventListener('DOMContentLoaded', init);
