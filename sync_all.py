@@ -2,6 +2,11 @@ import sys
 import subprocess
 from pathlib import Path
 
+# Ensure UTF-8 output on Windows console
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 PROJECT_ROOT = Path(__file__).resolve().parent
 
 def sync():
@@ -16,7 +21,7 @@ def sync():
         print("❌ Ошибка при деплое на GitHub Pages!")
         sys.exit(1)
 
-    # 2. Обновление кнопки и ссылки в Telegram Web App
+    # 2. Обновление настроек Telegram Web App
     tg_script = PROJECT_ROOT / "scripts" / "setup_telegram_bot.py"
     if tg_script.exists():
         print("\n=== Обновление настроек Telegram Web App ===")

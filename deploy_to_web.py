@@ -3,6 +3,11 @@ import sys
 import subprocess
 from pathlib import Path
 
+# Ensure UTF-8 output on Windows console
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 PROJECT_ROOT = Path(__file__).resolve().parent
 
 def run_cmd(cmd, check=True):
@@ -27,7 +32,7 @@ def deploy():
     # Check if anything to commit
     status = run_cmd(["git", "status", "--porcelain"], check=False)
     if status.stdout.strip():
-        run_cmd(["git", "commit", "-m", "Обновление заметок и веб-презентации"])
+        run_cmd(["git", "commit", "-m", "Полноэкранный режим Stories/Telegram UI с оверлеем и скрытием по тапу"])
     else:
         print("Нет новых изменений для коммита.")
 
