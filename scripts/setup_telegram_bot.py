@@ -1,11 +1,12 @@
 import os
+import time
 import json
 import urllib.request
 import urllib.error
 
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
-WEB_APP_URL = "https://deorocosta-afk.github.io/usa-trip-2026/"
+WEB_APP_URL = f"https://deorocosta-afk.github.io/usa-trip-2026/?v={int(time.time())}"
 
 def tg_api(method, data=None):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
