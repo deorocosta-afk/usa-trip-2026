@@ -323,7 +323,7 @@ def generate_html(days_data):
       object-fit: contain; /* Full frame fits without cropping */
       display: block;
       background: #000000;
-      cursor: pointer;
+      pointer-events: none; /* Never intercept touches/clicks from container */
     }}
 
     /* Circular Play/Pause Indicator (Overlay like Instagram/Telegram) */
@@ -437,11 +437,26 @@ def generate_html(days_data):
     }}
 
     /* UI HIDDEN STATE (Tap to Hide / Immersive Clean Screen) */
+    .tg-header, .tg-header-overlay, .tg-bottom-overlay, .caption-overlay, .slide-caption {{
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }}
+    body.hide-ui .tg-header,
+    body.hide-ui .tg-header-overlay {{
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transform: translateY(-8px) !important;
+    }}
+    body.hide-ui .tg-bottom-overlay,
+    body.hide-ui .caption-overlay,
+    body.hide-ui .slide-caption {{
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transform: translateY(8px) !important;
+    }}
     .ui-hidden {{
       opacity: 0 !important;
       pointer-events: none !important;
-      transform: translateY(12px) !important;
-      visibility: hidden !important;
+      transform: translateY(8px) !important;
     }}
 
     /* Day Picker Modal Drawer */
@@ -989,17 +1004,13 @@ def generate_html(days_data):
 
     /* Toggle UI overlay on tap (Native Telegram Media Viewer Immersive Mode) */
     function toggleUiVisibility() {{
+      if (currentView !== 'slideshow') return;
       isUiHidden = !isUiHidden;
+      document.body.classList.toggle('hide-ui', isUiHidden);
       const header = document.getElementById('tgHeader');
       const bottom = document.getElementById('tgBottom');
-
-      if (isUiHidden) {{
-        if (header) header.classList.add('ui-hidden');
-        if (bottom) bottom.classList.add('ui-hidden');
-      }} else {{
-        if (header) header.classList.remove('ui-hidden');
-        if (bottom) bottom.classList.remove('ui-hidden');
-      }}
+      if (header) header.classList.toggle('ui-hidden', isUiHidden);
+      if (bottom) bottom.classList.toggle('ui-hidden', isUiHidden);
     }}
 
     function nextSlide(e) {{
@@ -1025,28 +1036,40 @@ def generate_html(days_data):
       }}
     }}
 
-    /* Touch Swiping and Tap Detection for Slideshow */
+    /* Touch Swiping and Single Tap Detection for Slideshow */
     function setupTouchAndTap() {{
-      const viewport = document.getElementById('tgMediaViewport');
       let touchStartX = 0;
       let touchStartY = 0;
       let touchStartTime = 0;
+      let lastTouchEndTime = 0;
 
-      viewport.addEventListener('touchstart', (e) => {{
-        touchStartX = e.changedTouches[0].screenX;
-        touchStartY = e.changedTouches[0].screenY;
+      // Handle touch on mobile
+      document.addEventListener('touchstart', (e) => {{
+        if (currentView !== 'slideshow') return;
+        const titleOverlay = document.getElementById('titleSlideOverlay');
+        if (titleOverlay && titleOverlay.style.display === 'flex') return;
+        if (e.target.closest('#tgDrawerModal')) return;
+
+        touchStartX = e.changedTouches[0].clientX;
+        touchStartY = e.changedTouches[0].clientY;
         touchStartTime = Date.now();
       }}, {{ passive: true }});
 
-      viewport.addEventListener('touchend', (e) => {{
-        const touchEndX = e.changedTouches[0].screenX;
-        const touchEndY = e.changedTouches[0].screenY;
+      document.addEventListener('touchend', (e) => {{
+        if (currentView !== 'slideshow') return;
+        const titleOverlay = document.getElementById('titleSlideOverlay');
+        if (titleOverlay && titleOverlay.style.display === 'flex') return;
+        if (e.target.closest('#tgDrawerModal')) return;
+
+        const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
         const duration = Date.now() - touchStartTime;
         const deltaX = touchEndX - touchStartX;
         const deltaY = touchEndY - touchStartY;
+        lastTouchEndTime = Date.now();
 
-        // 1. Horizontal Swipe (min 45px)
-        if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {{
+        // 1. Horizontal Swipe (min 40px)
+        if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {{
           if (deltaX < 0) {{
             nextSlide();
           }} else {{
@@ -1055,19 +1078,42 @@ def generate_html(days_data):
           return;
         }}
 
-        // 2. Short Single Tap (< 300ms, minimal movement)
+        // 2. Short Single Tap (< 300ms, displacement < 12px)
         if (Math.abs(deltaX) < 12 && Math.abs(deltaY) < 12 && duration < 300) {{
           const target = e.target;
-          if (target.closest('.tg-icon-btn') || target.closest('.tg-back-btn') || target.closest('.tg-modal-drawer') || target.closest('.title-slide-btn') || target.closest('.tg-timeline-track')) {{
+          // Ignore tap ONLY if clicked directly on control buttons or timeline scrubber
+          if (target.closest('.tg-icon-btn') || 
+              target.closest('.tg-back-btn') || 
+              target.closest('.tg-timeline-track') || 
+              target.closest('.title-slide-btn') || 
+              target.closest('input[type="range"]') ||
+              target.closest('button')) {{
             return;
           }}
+          // In all other cases (video, photo, background or story caption):
           toggleUiVisibility();
         }}
       }}, {{ passive: true }});
 
-      // Desktop click on viewport also toggles UI
-      viewport.addEventListener('click', (e) => {{
-        if (e.target.closest('.tg-icon-btn') || e.target.closest('.title-slide-btn')) return;
+      // Desktop Click support (with ghost-click protection from touch)
+      document.addEventListener('click', (e) => {{
+        if (currentView !== 'slideshow') return;
+        if (Date.now() - lastTouchEndTime < 400) return; // Prevent double-trigger on touch devices
+
+        const titleOverlay = document.getElementById('titleSlideOverlay');
+        if (titleOverlay && titleOverlay.style.display === 'flex') return;
+
+        const target = e.target;
+        if (target.closest('#tgDrawerModal') || 
+            target.closest('.tg-icon-btn') || 
+            target.closest('.tg-back-btn') || 
+            target.closest('.tg-timeline-track') || 
+            target.closest('.title-slide-btn') || 
+            target.closest('input[type="range"]') ||
+            target.closest('button')) {{
+          return;
+        }}
+
         toggleUiVisibility();
       }});
     }}
