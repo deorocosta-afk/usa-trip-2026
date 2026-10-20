@@ -32,7 +32,7 @@ def deploy():
     # Check if anything to commit
     status = run_cmd(["git", "status", "--porcelain"], check=False)
     if status.stdout.strip():
-        run_cmd(["git", "commit", "-m", "Полноэкранный режим Stories/Telegram UI с оверлеем и скрытием по тапу"])
+        run_cmd(["git", "commit", "-m", "Откат к чистой веб-презентации без Telegram UI"])
     else:
         print("Нет новых изменений для коммита.")
 
