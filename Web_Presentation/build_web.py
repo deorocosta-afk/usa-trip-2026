@@ -19,23 +19,37 @@ def get_browser_media_url(media_file, is_video=False):
     web_media_path = PHOTOS_WEB_DIR / media_file
     if web_media_path.exists() and web_media_path.stat().st_size > 0:
         return f"./Photos_web/{media_file}"
+    orig_media_path = PHOTOS_DIR / media_file
+    if orig_media_path.exists() and orig_media_path.stat().st_size > 0:
+        return f"./Photos/{media_file}"
     return f"./Photos_web/{media_file}"
 
 def extract_day_number(filename):
     match = re.search(r"Day\s*(\d+)", filename, re.IGNORECASE)
     return int(match.group(1)) if match else 999
 
-def clean_location_title(raw_title):
+def parse_location_and_meta(raw_title):
     cleaned = re.sub(r"^[>\s]*\[!quote\]\s*", "", raw_title).strip()
     cleaned = re.sub(r"^[>\s]*📍\s*", "", cleaned).strip()
-    parts = cleaned.split("|")
-    first_part = parts[0].strip()
+    cleaned = re.sub(r"Видео-момент[:\s—–-]*", "", cleaned, flags=re.IGNORECASE).strip()
+    
+    parts = [p.strip() for p in cleaned.split("|")]
+    first_part = parts[0] if parts else ""
     first_part = re.sub(r"[*_]{2,}", "", first_part)
-    first_part = re.sub(r"[*_]", "", first_part)
-    return first_part.strip()
+    first_part = re.sub(r"[*_]", "", first_part).strip()
+    
+    sub_meta = ""
+    if len(parts) > 1:
+        rest = " • ".join(parts[1:])
+        rest = re.sub(r"[*_]{2,}", "", rest)
+        rest = re.sub(r"[*_]", "", rest).strip()
+        sub_meta = rest
+    
+    return first_part, sub_meta
 
 def clean_story_text(lines):
     full_text = " ".join([l.strip().lstrip(">").strip() for l in lines if l.strip()])
+    full_text = re.sub(r"Видео-момент[:\s—–-]*", "", full_text, flags=re.IGNORECASE)
     full_text = re.sub(r"\*\*История кадра(?:\s*\([^)]*\))?:\*\*", "", full_text, flags=re.IGNORECASE)
     full_text = re.sub(r"\*\*Микро-история(?:\s*\([^)]*\))?:\*\*", "", full_text, flags=re.IGNORECASE)
     full_text = re.sub(r"История кадра(?:\s*\([^)]*\))?:", "", full_text, flags=re.IGNORECASE)
@@ -90,7 +104,7 @@ def parse_day_file(file_path):
                     story_lines.append(lines[j].strip())
                     j += 1
             
-            loc_title = clean_location_title(raw_title)
+            loc_title, meta_info = parse_location_and_meta(raw_title)
             story = clean_story_text(story_lines)
             
             if media_file:
@@ -98,6 +112,7 @@ def parse_day_file(file_path):
                     "media": media_url,
                     "is_video": is_video,
                     "title": loc_title,
+                    "meta": meta_info,
                     "story": story
                 })
             i = j
@@ -907,6 +922,7 @@ def generate_html(days_data):
             <span style="color:var(--accent-gold);">●</span> <span id="slideDayLabel">ДЕНЬ 1</span>
           </div>
           <h2 class="slide-title" id="slideTitle">Название локации</h2>
+          <div class="slide-submeta" id="slideSubMeta" style="font-size:0.88rem; color:var(--accent-gold); opacity:0.9; margin-top:-0.4rem; font-weight:500;"></div>
           <div class="slide-divider"></div>
           <p class="slide-story" id="slideStory">Художественное описание...</p>
         </div>
@@ -1071,7 +1087,7 @@ def generate_html(days_data):
       const overlay = document.getElementById('titleSlideOverlay');
       const dayData = daysData[currentDayIndex];
       document.getElementById('titleDayTag').textContent = `ДЕНЬ ${{dayData.day_num}}`;
-      document.getElementById('titleRouteText').textContent = dayData.title.replace(/^##\s*/, '');
+      document.getElementById('titleRouteText').textContent = dayData.title.replace(/^##\\s*/, '');
       overlay.style.display = 'flex';
     }}
 
@@ -1223,7 +1239,7 @@ def generate_html(days_data):
         header.className = 'album-day-header';
         header.innerHTML = `
           <div class="album-day-tag">ДЕНЬ ${{day.day_num}}</div>
-          <h1 class="album-day-title">${{day.title.replace(/^##\s*/, '')}}</h1>
+          <h1 class="album-day-title">${{day.title.replace(/^##\\s*/, '')}}</h1>
         `;
         section.appendChild(header);
 
